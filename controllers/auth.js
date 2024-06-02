@@ -1,6 +1,7 @@
 import { db } from "../db.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import { connect } from "mongoose";
 
 export const register = (req, res) => {
   //CHECK EXISTING USER
@@ -24,17 +25,17 @@ console.log(req.body)
 };
 export const driverregister = (req, res) => {
   //CHECK EXISTING USER
-  
-  const q = "SELECT * FROM Drivers WHERE email = ?";
-  db.query(q, [req.body.email], (err, data) => {
-    if (err) return res.status(500).json(err);
+  console.log(req.body)
+  const q = "SELECT * FROM Drivers WHERE email = '"+req.body.email+"'";
+  db.query(q, (err, data) => {
+    if (err) return console.log(err);
     if (data.length) return res.status(409).json("User already exists!");
-console.log(req.body)
+
     //Hash the password and create a user
     const salt = bcrypt.genSaltSync(10);
     const hash = bcrypt.hashSync(req.body.password, salt);
     console.log(req.body)
-    const q = "INSERT INTO Drivers (name,DOB,email,gender,mobile,password) VALUES ('"+req.body.name+"','"+req.body.dob+"','"+req.body.email+"','"+req.body.gender+"','"+req.body.mobile+"','"+hash+"')";
+    const q = "INSERT INTO Drivers (name,DOB,email,gender,mobile,password,drivinglisence,adharno) VALUES ('"+req.body.name+"','"+req.body.dob+"','"+req.body.email+"','"+req.body.gender+"','"+req.body.mobile+"','"+hash+"','"+req.body.drivinglisence+"','"+req.body.adhar+"')";
     
 
     db.query(q, (err, data) => {
@@ -46,7 +47,7 @@ console.log(req.body)
 
 export const driverregister2 = (req, res) => {
 
-    const q = "UPDATE Drivers SET drivinglisence='"+req.body.drivinglisence+"', adharno='"+req.body.adharno+"',Luxery='"+req.body.luxery+"',LuxeryExp='"+req.body.luxeryExp+"',Auto='"+req.body.auto+"',AutoExp='"+req.body.autoExp+"',Manual='"+req.body.manual+"',ManualExp='"+req.body.manualexp+"',Luxeryoutstation='"+req.body.luxeryoutstation+"',Luxeryperday='"+req.body.luxeryperday+"',Luxeryperhour='"+req.body.luxeryperhour+"',Luxeryperkm='"+req.body.luxeryperkm+"',Luxeryoneway='"+req.body.luxeryoneway+"',Luxeryroundtrip='"+req.body.luxeryroundtrip+"',Autooutstation='"+req.body.autooutstation+"',Autoperday='"+req.body.autoperday+"',Autoperhour='"+req.body.autoperhour+"',Autooneway='"+req.body.autooneway+"',Autoroundtrip='"+req.body.autoroundtrip+"',Autoperkm='"+req.body.autoperkm+"',Manualoutstation='"+req.body.manualoutstation+"',Manualperday='"+req.body.manualperday+"',Manualperhour='"+req.body.manualperhour+"',Manualperkm='"+req.body.manualperkm+"',Manualoneway='"+req.body.manualoneway+"',Manualroundtrip='"+req.body.manualroundtrip+"',Luxerycarsdriven='"+req.body.luxerycarsdriven+"',Autocarsdriven='"+req.body.Autocarsdriven+"',Manualcarsdriven='"+req.body.Manualcarsdriven+"',Luxerypriceperday='"+req.body.luxerypriceperday+"',Luxerypriceperhr='"+req.body.luxerypriceperhour+"',Luxerypriceperkm='"+req.body.luxerypriceperkm+"',Luxerypriceoneway='"+req.body.luxerypriceoneway+"',Luxerypriceroundtrip='"+req.body.luxerypriceroundtrip+"',Autopriceperday='"+req.body.autopriceperday+"',Autopriceperhour='"+req.body.autopriceperhour+"',Autopriceperkm='"+req.body.autopriceperkm+"',Autopriceoneway='"+req.body.autopriceoneway+"',Autopriceroundtrip='"+req.body.autopriceroundtrip+"',Manualpriceperday='"+req.body.manualpriceperday+"',Manualpriceperhour='"+req.body.manualpriceperhour+"',Manualpriceperkm='"+req.body.manualpriceperkm+"',Manualpriceoneway='"+req.body.manualpriceoneway+"',Manualpriceroundtrip='"+req.body.manualpriceroundtrip+"' WHERE email = '"+req.body.email+"';"
+    const q = "UPDATE Drivers SET Luxery='"+req.body.luxery+"',LuxeryExp='"+req.body.luxeryexp+"',Auto='"+req.body.auto+"',AutoExp='"+req.body.autoExp+"',Manual='"+req.body.manual+"',ManualExp='"+req.body.manualexp+"',Luxeryoutstation='"+req.body.luxeryoutstation+"',Luxeryperday='"+req.body.luxeryperday+"',Luxeryperhour='"+req.body.luxeryperhour+"',Luxeryperkm='"+req.body.luxeryperkm+"',Luxeryoneway='"+req.body.luxeryoneway+"',Luxeryroundtrip='"+req.body.luxeryroundtrip+"',Autooutstation='"+req.body.autooutstation+"',Autoperday='"+req.body.autoperday+"',Autoperhour='"+req.body.autoperhour+"',Autooneway='"+req.body.autooneway+"',Autoroundtrip='"+req.body.autoroundtrip+"',Autoperkm='"+req.body.autoperkm+"',Manualoutstation='"+req.body.manualoutstation+"',Manualperday='"+req.body.manualperday+"',Manualperhour='"+req.body.manualperhour+"',Manualperkm='"+req.body.manualperkm+"',Manualoneway='"+req.body.manualoneway+"',Manualroundtrip='"+req.body.manualroundtrip+"',Luxerycarsdriven='"+req.body.luxerycarsdriven+"',Autocarsdriven='"+req.body.Autocarsdriven+"',Manualcarsdriven='"+req.body.Manualcarsdriven+"',Luxeryperdayprice='"+req.body.luxerypriceperday+"',Luxeryperhourprice='"+req.body.luxerypriceperhour+"',Luxeryperkmprice='"+req.body.luxerypriceperkm+"',Luxeryonewayprice='"+req.body.luxerypriceoneway+"',Luxeryroundtripprice='"+req.body.luxerypriceroundtrip+"',Autoperdayprice='"+req.body.autopriceperday+"',Autoperhourprice='"+req.body.autopriceperhour+"',Autoperkm='"+req.body.autopriceperkm+"',Autoonewayprice='"+req.body.autopriceoneway+"',Autoroundtripprice='"+req.body.autopriceroundtrip+"',Manualperdayprice='"+req.body.manualpriceperday+"',Manualperhourprice='"+req.body.manualpriceperhour+"',Manualperkmprice='"+req.body.manualpriceperkm+"',Manualonewayprice='"+req.body.manualpriceoneway+"',Manualroundtripprice='"+req.body.manualpriceroundtrip+"' WHERE email = '"+req.body.email+"';"
     
 
     db.query(q, (err, data) => {
@@ -58,7 +59,7 @@ export const driverregister2 = (req, res) => {
 
 export const login = (req, res) => {
   //CHECK USER
-
+console.log(req.body)
   const q = "SELECT * FROM Users WHERE email = '"+req.body.email+"'";
 
   db.query(q, (err, data) => {
@@ -89,11 +90,14 @@ export const login = (req, res) => {
 
 export const driverlogin = (req, res) => {
   //CHECK USER
-console.log(req.body.email)
+  const salt = bcrypt.genSaltSync(10);
+    const hash = bcrypt.hashSync(req.body.password, salt);
+    console.log(hash)
+console.log(req.body)
   const q = "SELECT * FROM Drivers WHERE email = '"+req.body.email+"'";
 
   db.query(q, (err, data) => {
-    if (err) return console.log(err);
+    if (err) return console.log("e2f23f",err);
     if (data.length === 0) return console.log("usernot found");
     console.log(data[0].password)
     //Check password
