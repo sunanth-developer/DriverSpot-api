@@ -2,10 +2,11 @@ import { db } from "../db.js";
 
 export const Requestdriver = (req, res)=>{
     console.log(req.body)
-   let q="INSERT INTO Bookings (b_id, driver_id, driver_name,startlocation, destination, price, booking_day, car, cartype) VALUES ('"+req.body.bid+"','"+req.body.did+"','"+req.body.dname+"','"+req.body.from+"','"+req.body.to+"','"+req.body.price+"','"+req.body.bookingday+"','"+req.body.car+"','"+req.body.cartype+"')"
+   let q="INSERT INTO Bookings (b_id,d_id,booking_status,startlocation,destination,price,car,cartype,triptype,username,bookingtype,ride_distance,Expected_time) VALUES ('"+req.body.uid+"','"+req.body.driverids+"','"+req.body.bookingstatus+"','"+req.body.pickup+"','"+req.body.destinationp+"','"+req.body.price+"','"+req.body.carname+"','"+req.body.cartype+"','"+req.body.triptype+"','"+req.body.mobileno+"','"+req.body.bookingtype+"','"+req.body.distance+"','"+req.body.time+"')"
     db.query(q, (err, data) => {
       if (err) console.log(err);
-     return res.status(200).json(data);
+     return console.log(data);
+
       
     });
 }
@@ -23,7 +24,7 @@ export const Getrequests = (req, res)=>{
 
 export const Getrequestsdriver = (req, res)=>{
     console.log(req.body)
-   let q="SELECT * FROM  Bookings WHERE driver_id='"+req.body.driverid+"'"
+   let q="SELECT * FROM  Bookings WHERE d_id='"+req.body.driverid+"'"
     db.query(q, (err, data) => {
       if (err) console.log(err);
        console.log(data)

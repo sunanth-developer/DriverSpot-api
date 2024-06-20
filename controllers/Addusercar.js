@@ -2,19 +2,19 @@
 import { db } from "../db.js";
 
 export const Addcar = (req, res)=>{
-    console.log(req.body)
-   let q="INSERT INTO Usercars (cartype,carname,uid) VALUES ('"+req.body.cartype+"','"+req.body.vehicle+"','"+req.body.uid+"')"
+    
+   let q="INSERT INTO Usercars (cartype,carname,uid,geartype,registrationno) VALUES ('"+req.body.cartype+"','"+req.body.vehicle+"','"+req.body.uid+"','"+req.body.geartype+"','"+req.body.registrationno+"')"
     db.query(q, (err, data) => {
       if (err) return res.status(500).send(err);
-     return res.status(200).json(data);
+     return  res.status(200).json(data);
       
     });
 }
 export const Getcar = (req, res)=>{
     console.log(req.body)
-   let q="SELECT * FROM  Usercars WHERE uid='"+req.body.aid+"'"
+   let q="SELECT * FROM  Usercars WHERE uid='"+req.body.uid+"'"
     db.query(q, (err, data) => {
-      if (err) return console.log(err);
+      if (err) return res.status(500).send(err);
        console.log(data)
      return res.status(200).json(data);
      

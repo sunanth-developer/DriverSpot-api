@@ -23,6 +23,22 @@ console.log(req.body)
     });
   });
 };
+
+export const phonelogin = (req, res) => {
+  //CHECK EXISTING USER
+  const q = "SELECT * FROM Users WHERE mobileno = '"+req.body.mobile+"'";
+  db.query(q, (err, data) => {
+    if (err) return res.status(500).json(err);
+    if (data.length) return res.status(200).json(data);
+console.log(req.body)
+    const q = "INSERT INTO Users (mobileno) VALUES ('"+req.body.mobile+"')";
+    db.query(q, (err, data) => {
+      if (err) return console.log(err);
+      return res.status(200).json(data);
+    });
+  });
+};
+
 export const driverregister = (req, res) => {
   //CHECK EXISTING USER
   console.log(req.body)
@@ -88,8 +104,10 @@ console.log(req.body)
 };
 
 
+
 export const driverlogin = (req, res) => {
   //CHECK USER
+  console.log("hello")
   const salt = bcrypt.genSaltSync(10);
     const hash = bcrypt.hashSync(req.body.password, salt);
     console.log(hash)

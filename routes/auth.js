@@ -1,11 +1,12 @@
 import express from "express";
 import { Adduseraddress, Deleteuseraddress, Edituseraddress, Getuseraddress } from "../controllers/Adduseraddress.js";
 import { Addcar, Deletecar, Editcar, Getcar } from "../controllers/Addusercar.js";
-import { register, login, logout,driverregister, driverregister2, driverlogin } from "../controllers/auth.js";
-import { Editdriverdates } from "../controllers/Driverdates.js";
+import { register, login, logout,driverregister, driverregister2, driverlogin, phonelogin } from "../controllers/auth.js";
+import { driverbookings, Driverdata, Driverstatus, Editdriverdates, Notavilabledriverdates } from "../controllers/Driverdates.js";
 import { Getbookingstatus } from "../controllers/Getbookingstatus.js";
 import { getdrivers, getdriverslocation, searchDrivers } from "../controllers/getdrivers.js";
 import { Editresponce, Getrequests, Getrequestsdriver, Requestdriver } from "../controllers/Requestdriver.js";
+import { AcceptRide, Getimages, UploadRideImages } from "../controllers/Ride.js";
 
 const router = express.Router();
 router.post("/register", register);
@@ -31,4 +32,15 @@ router.post("/editrequestresponce", Editresponce);
 router.post("/editdriverdates", Editdriverdates);
 router.post("/getdriverslocation", getdriverslocation);
 router.post("/getbookingstatus", Getbookingstatus);
+router.post("/getdriverbookings", driverbookings);
+router.post("/acceptrides", Driverstatus);
+router.post("/driverdata", Driverdata);
+router.post("/notavilabledriverdates", Notavilabledriverdates);
+router.post("/acceptride", AcceptRide);
+router.post("/uploadcarimages", UploadRideImages);
+router.post("/getimages", Getimages);
+router.post("/phonelogin", phonelogin);
+
+
+
 export default router;
