@@ -3,16 +3,16 @@ import { db } from "../db.js";
 
 export const Adduseraddress = (req, res)=>{
     console.log(req.body)
-   let q="INSERT INTO Useraddress (addresstitle,address,aid) VALUES ('"+req.body.addresstitle+"','"+req.body.address+"','"+req.body.aid+"')"
+   let q="INSERT INTO Useraddress (addresstitle,address,aid) VALUES ('"+req.body.addresstitle+"','"+req.body.address+"','"+req.body.uid+"')"
     db.query(q, (err, data) => {
-      if (err) return res.status(500).send(err);
+      if (err) return console.log(err);
      return res.status(200).json(data);
       
     });
 }
 export const Getuseraddress = (req, res)=>{
     console.log(req.body)
-   let q="SELECT * FROM  Useraddress WHERE aid='"+req.body.aid+"'"
+   let q="SELECT * FROM  Useraddress WHERE aid='"+req.body.uid+"'"
     db.query(q, (err, data) => {
       if (err) return res.status(500).send(err);
        console.log(data)
