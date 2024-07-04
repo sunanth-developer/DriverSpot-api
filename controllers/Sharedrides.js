@@ -22,9 +22,9 @@ export const Getbookingdetails = (req, res)=>{
 
 export const Shareride = (req, res)=>{
     console.log(req.body)
-   let q = "INSERT INTO sharedrides (b_id, d_id, usermobile, userlocation, driverlocation, sharedwith, pickuppoint, destination, drivername, drivermobile, vehicleregistration, vehicletype, vehiclename, geartype,driverimage) VALUES ('"+req.body.b_id+"', '"+req.body.d_id+"', '"+req.body.mobile+"', '"+req.body.userlocation+"', '"+req.body.driverlocation+"', '"+req.body.sharedwith+"', '"+req.body.pickuppoint+"', '"+req.body.destination+"', '"+req.body.drivername+"', '"+req.body.drivermobile+"', '"+req.body.vehicleregistration+"', '"+req.body.vehicletype+"', '"+req.body.vehiclename+"','"+req.body.geartype+"','"+req.body.driverimg+"');"                                        
+   let q = "INSERT INTO sharedrides (b_id, d_id, usermobile, userlocation, driverlocation, sharedwith, pickuppoint, destination, drivername, drivermobile, registrationno, cartype, carname, geartype,driverimage) VALUES ('"+req.body.b_id+"', '"+req.body.d_id+"', '"+req.body.mobile+"', '"+req.body.userlocation+"', '"+req.body.driverlocation+"', '"+req.body.sharedwith+"', '"+req.body.pickuppoint+"', '"+req.body.destination+"', '"+req.body.drivername+"', '"+req.body.drivermobile+"', '"+req.body.vehicleregistration+"', '"+req.body.vehicletype+"', '"+req.body.vehiclename+"','"+req.body.geartype+"','"+req.body.driverimg+"');"                                        
     db.query(q, (err, data) => {
-      if (err) res.status(500).send(err);
+      if (err) console.log(err);
      return res.status(200).json(data);
       
     });
