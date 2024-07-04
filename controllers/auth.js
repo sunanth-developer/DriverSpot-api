@@ -1,7 +1,6 @@
 import { db } from "../db.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { connect } from "mongoose";
 
 export const register = (req, res) => {
   //CHECK EXISTING USER
