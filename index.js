@@ -21,7 +21,7 @@ app.use(cors());
 
 app.use("/api/auth", authRoutes);
 app.use("/",(req,res)=>{
-  res.send("hello welcome")
+  res.send("hello welcome12345774")
 })
 app.use("/hello",(req,res)=>{
   res.send("hello welcome234")
