@@ -23,6 +23,9 @@ app.use("/api/auth", authRoutes);
 app.use("/",(req,res)=>{
   res.send("hello welcome")
 })
+app.use("/hello",(req,res)=>{
+  res.send("hello welcome234")
+})
 const connectedUsers = new Map(); // To store connected users
 const connectedDrivers = new Map();
 
@@ -60,7 +63,7 @@ io.on("connection", (socket) => {
   });
 });
 
-
+//dkjhbnskdij
 
 
 
@@ -70,3 +73,5 @@ io.on("connection", (socket) => {
 httpServer.listen(4003, () => {
   console.log("Connected!");
 });
+
+module.exports=app;
