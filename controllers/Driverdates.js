@@ -25,7 +25,15 @@ export const driverbookings = (req, res)=>{
       
     });
 }
-
+export const startedride = (req, res)=>{
+  console.log("hello")
+  console.log(req.body.bookingtype)
+    db.query("SELECT * FROM Bookings WHERE booking_status='started' AND JSON_CONTAINS(d_id, '"+req.body.d_id+"', '$') ;", (err, data) => {
+      if (err) return res.status(500).send(err);
+     return res.status(200).json(data);
+      
+    });
+}
 
 export const Driverstatus = (req, res)=>{
   

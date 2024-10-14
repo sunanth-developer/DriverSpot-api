@@ -2,7 +2,7 @@ import { db } from "../db.js";
 
 export const Getsharedrides = (req, res)=>{
     console.log(req.body)
-   let q = "SELECT * from sharedrides where sharedwith='"+req.body.mobile+"' AND Ridestatus='started' "
+   let q = "SELECT * FROM Bookings WHERE  JSON_CONTAINS(sharedwith, '"+req.body.mobile+"' , '$')  "
     db.query(q, (err, data) => {
       if (err) res.status(500).send(err);
      return res.status(200).json(data);

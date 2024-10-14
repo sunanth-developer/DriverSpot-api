@@ -35,7 +35,7 @@ export const Getfilterrequests = (req, res)=>{
 
 export const Getrequestsdriver = (req, res)=>{
     console.log(req.body)
-   let q="SELECT * FROM  Bookings WHERE d_id='"+req.body.driverid+"'"
+   let q= "SELECT * FROM Bookings WHERE  JSON_CONTAINS(d_id, '"+req.body.driverid+"' , '$') "
     db.query(q, (err, data) => {
       if (err)res.status(500).send(err);
        console.log(data)

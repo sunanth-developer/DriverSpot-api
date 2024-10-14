@@ -2,9 +2,10 @@ import express from "express";
 import { Adduseraddress, Deleteuseraddress, Edituseraddress, Getuseraddress } from "../controllers/Adduseraddress.js";
 import { Addcar, Deletecar, Editcar, Getcar } from "../controllers/Addusercar.js";
 import { register, login, logout,driverregister, driverregister2, driverlogin, phonelogin } from "../controllers/auth.js";
-import { driverbookings, Driverdata, Driverstatus, Editdriverdates, Notavilabledriverdates } from "../controllers/Driverdates.js";
+import { Allmessage, Message, Responce } from "../controllers/Customersupport.js";
+import { driverbookings, Driverdata, Driverstatus, Editdriverdates, Notavilabledriverdates, startedride } from "../controllers/Driverdates.js";
 import { Getbookingstatus } from "../controllers/Getbookingstatus.js";
-import { getdrivers, getdriverslocation, searchDrivers } from "../controllers/getdrivers.js";
+import { editdriveraccount, getdriverbyaccount, getdriverbymobile, getdrivers, getdriverslocation, searchDrivers } from "../controllers/getdrivers.js";
 import { Editresponce, Getfilterrequests, Getrequests, Getrequestsdriver, Requestdriver } from "../controllers/Requestdriver.js";
 import { AcceptRide, Getimages, UploadRideImages } from "../controllers/Ride.js";
 import { Getbookingdetails, Getsharedrides, Shareride, Updatedriverlocation, Updateuserlocation } from "../controllers/Sharedrides.js";
@@ -51,6 +52,12 @@ router.post("/shareride", Shareride);
 router.post("/updateuserlocation", Updateuserlocation);
 router.post("/updatedriverlocation", Updatedriverlocation);
 router.post("/getbookingdetails", Getbookingdetails);
-
+router.post("/sendmessage", Message);
+router.post("/sendresponce", Responce);
+router.post("/allmessages", Allmessage);
+router.post("/getdriverbymobile", getdriverbymobile);
+router.post("/getdriverbyaccount", getdriverbyaccount);
+router.post("/editdriveraccount", editdriveraccount);
+router.post("/startedride", startedride);
 
 export default router;

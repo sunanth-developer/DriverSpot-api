@@ -25,6 +25,7 @@ console.log(req.body)
 
 export const phonelogin = (req, res) => {
   //CHECK EXISTING USER
+  console.log("hello234")
   const q = "SELECT * FROM Users WHERE mobileno = '"+req.body.mobile+"'";
   db.query(q, (err, data) => {
     if (err) return res.status(500).json(err);
@@ -50,8 +51,8 @@ export const driverregister = (req, res) => {
     const salt = bcrypt.genSaltSync(10);
     const hash = bcrypt.hashSync(req.body.password, salt);
     console.log(req.body)
-    const q = "INSERT INTO Drivers (name,DOB,email,gender,mobile,password,drivinglisence,adharno) VALUES ('"+req.body.name+"','"+req.body.dob+"','"+req.body.email+"','"+req.body.gender+"','"+req.body.mobile+"','"+hash+"','"+req.body.drivinglisence+"','"+req.body.adhar+"')";
-    
+    const q = "INSERT INTO Drivers (name,DOB,email,gender,mobile,password,drivinglisence,adharno,TNC,telugu,english,hindi,totalexperience,pancard) VALUES ('"+req.body.name+"','"+req.body.dob+"','"+req.body.email+"','"+req.body.gender+"','"+req.body.mobile+"','"+hash+"','"+req.body.drivinglisence+"','"+req.body.adhar+"','"+req.body.terms+"','"+req.body.telugu+"','"+req.body.english+"','"+req.body.hindi+"','"+req.body.experience+"','"+req.body.pancard+"')";
+    //(email,gender,drivinglisence,password,mobile,adhar,name,terms,dob,pancard,telugu,hindi,english,experience)
 
     db.query(q, (err, data) => {
       if (err) return console.log(err);
@@ -62,14 +63,19 @@ export const driverregister = (req, res) => {
 
 export const driverregister2 = (req, res) => {
 
-    const q = "UPDATE Drivers SET Luxery='"+req.body.luxery+"',LuxeryExp='"+req.body.luxeryexp+"',Auto='"+req.body.auto+"',AutoExp='"+req.body.autoExp+"',Manual='"+req.body.manual+"',ManualExp='"+req.body.manualexp+"',Luxeryoutstation='"+req.body.luxeryoutstation+"',Luxeryperday='"+req.body.luxeryperday+"',Luxeryperhour='"+req.body.luxeryperhour+"',Luxeryperkm='"+req.body.luxeryperkm+"',Luxeryoneway='"+req.body.luxeryoneway+"',Luxeryroundtrip='"+req.body.luxeryroundtrip+"',Autooutstation='"+req.body.autooutstation+"',Autoperday='"+req.body.autoperday+"',Autoperhour='"+req.body.autoperhour+"',Autooneway='"+req.body.autooneway+"',Autoroundtrip='"+req.body.autoroundtrip+"',Autoperkm='"+req.body.autoperkm+"',Manualoutstation='"+req.body.manualoutstation+"',Manualperday='"+req.body.manualperday+"',Manualperhour='"+req.body.manualperhour+"',Manualperkm='"+req.body.manualperkm+"',Manualoneway='"+req.body.manualoneway+"',Manualroundtrip='"+req.body.manualroundtrip+"',Luxerycarsdriven='"+req.body.luxerycarsdriven+"',Autocarsdriven='"+req.body.Autocarsdriven+"',Manualcarsdriven='"+req.body.Manualcarsdriven+"',Luxeryperdayprice='"+req.body.luxerypriceperday+"',Luxeryperhourprice='"+req.body.luxerypriceperhour+"',Luxeryperkmprice='"+req.body.luxerypriceperkm+"',Luxeryonewayprice='"+req.body.luxerypriceoneway+"',Luxeryroundtripprice='"+req.body.luxerypriceroundtrip+"',Autoperdayprice='"+req.body.autopriceperday+"',Autoperhourprice='"+req.body.autopriceperhour+"',Autoperkm='"+req.body.autopriceperkm+"',Autoonewayprice='"+req.body.autopriceoneway+"',Autoroundtripprice='"+req.body.autopriceroundtrip+"',Manualperdayprice='"+req.body.manualpriceperday+"',Manualperhourprice='"+req.body.manualpriceperhour+"',Manualperkmprice='"+req.body.manualpriceperkm+"',Manualonewayprice='"+req.body.manualpriceoneway+"',Manualroundtripprice='"+req.body.manualpriceroundtrip+"' WHERE email = '"+req.body.email+"';"
-    
+   const { email,sedantype,suvtype,hatchbacktype,luxurytype } = req.body;
 
-    db.query(q, (err, data) => {
+  // Convert sedanType array to a comma-separated string (e.g., "manual,auto")
+  const sedanTypeStr = sedantype.join(',');
+  const suvTypeStr = suvtype.join(',');
+  const hatchbackTypeStr = hatchbacktype.join(',');
+  const luxuryTypeStr = luxurytype.join(',');  // E.g., ['manual', 'auto'] becomes 'manual,auto'
+  const q = "UPDATE Drivers SET sedantype='"+sedanTypeStr+"',suvtype='"+suvTypeStr+"',hatchbacktype='"+hatchbackTypeStr+"',luxurytype='"+luxuryTypeStr+"' WHERE email = '"+req.body.email+"'"
+   db.query(q, (err, data) => {
       if (err) return console.log(err);
-      console.log(res)
       return res.status(200).json("User has been created.");
     });
+console.log(q)
 };
 
 export const login = (req, res) => {

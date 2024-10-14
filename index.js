@@ -20,6 +20,9 @@ app.use(cookieParser());
 app.use(cors());
 
 app.use("/api/auth", authRoutes);
+app.use("/",(req,res)=>{
+  res.send("hello welcome")
+})
 const connectedUsers = new Map(); // To store connected users
 const connectedDrivers = new Map();
 
