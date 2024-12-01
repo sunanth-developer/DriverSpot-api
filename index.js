@@ -5,86 +5,104 @@ import cors from 'cors';
 import { db } from "./db.js";
 import { createServer } from "http"; // Import createServer from http module
 import { Server } from "socket.io"; // Import Server from socket.io
-import { editdriveraccount, getdriverbyaccount, getdriverbymobile, getdrivers, getdriverslocation, searchDrivers } from "./controllers/getdrivers.js";
-import { driverbookings, Driverdata, Driverstatus, Editdriverdates, startedride } from "./controllers/Driverdates.js";
-import { Allmessage, Message, Responce } from "./controllers/Customersupport.js";
-import { driverlogin, driverregister, driverregister2, login, logout, phonelogin, register } from "./controllers/auth.js";
 import { Addcar, Deletecar, Editcar, Getcar } from "./controllers/Addusercar.js";
+import { editdriveraccount, getdriverbyaccount, getdriverbymobile, getdrivers, getdriverslocation, searchDrivers } from "./controllers/getdrivers.js";
+import { driverlogin, driverregister, driverregister2, login, logout, phonelogin, register } from "./controllers/auth.js";
 import { Adduseraddress, Deleteuseraddress, Edituseraddress, Getuseraddress } from "./controllers/Adduseraddress.js";
 import { Editresponce, Getfilterrequests, Getrequests, Getrequestsdriver, Requestdriver } from "./controllers/Requestdriver.js";
+import { driverbookings, Driverdata, Driverstatus, startedride } from "./controllers/Driverdates.js";
 import { Getbookingstatus } from "./controllers/Getbookingstatus.js";
 import { AcceptRide, Getimages, UploadRideImages } from "./controllers/Ride.js";
 import { Editprofile, Getprofile, Getusers } from "./controllers/Userprofilr.js";
 import { Getbookingdetails, Getsharedrides, Shareride, Updatedriverlocation, Updateuserlocation } from "./controllers/Sharedrides.js";
-
+import { Allmessage, Message, Responce } from "./controllers/Customersupport.js";
+import { MongoClient } from 'mongodb';
 const app = express();
-const httpServer = createServer(app); // Create an HTTP server
+const httpServer = createServer(app); 
 const io = new Server(httpServer, {
   cors: {
     origin: "*", // Update with your client URL
     methods: ["GET", "POST"]
   }
 });
-
+const uri ="mongodb+srv://sunanthsamala7:MmQXJz6cCKld1vsY@users.lzhtx.mongodb.net/?retryWrites=true&w=majority&appName=users"
 app.use(express.json());
 app.use(cookieParser());
 app.use(cors());
 
-app.get("/api/auth", authRoutes);
 app.get("/",(req,res)=>{
   res.send("hello welcome12345774")
 })
-app.get("/hello",(req,res)=>{
-  res.send("hello welcome234")
-})
-app.get("/getdriverslocation",getdriverslocation);
-app.get("/register", register);
-app.get("/driverregister", driverregister);
-app.get("/driverregister2", driverregister2);
-app.get("/login", login);
-app.get("/driverlogin", driverlogin);
-app.get("/logout", logout);
-app.get("/getdrivers", getdrivers);
-app.get("/searchdrivers", searchDrivers);
-app.get("/addusercar", Addcar);
-app.get("/getusercar", Getcar);
-app.get("/editusercar", Editcar);
-app.get("/deletecar", Deletecar);
-app.get("/adduseraddress", Adduseraddress);
-app.get("/getuseraddress", Getuseraddress);
-app.get("/edituseraddress", Edituseraddress);
-app.get("/deleteuseraddress", Deleteuseraddress);
-app.get("/requestdriver", Requestdriver);
-app.get("/getrequests", Getrequests);
-app.get("/getrequestsdriver", Getrequestsdriver);
-app.get("/editrequestresponce", Editresponce);
-app.get("/editdriverdates", Editdriverdates);
-app.get("/getbookingstatus", Getbookingstatus);
-app.get("/getdriverbookings", driverbookings);
-app.get("/acceptrides", Driverstatus);
-app.get("/driverdata", Driverdata);
-app.get("/acceptride", AcceptRide);
-app.get("/uploadcarimages", UploadRideImages);
-app.get("/getimages", Getimages);
-app.get("/phonelogin", phonelogin);
-app.get("/editprofile", Editprofile);
-app.get("/getprofile", Getprofile);
-app.get("/getfilterrequests", Getfilterrequests);
-app.get("/getusers", Getusers);
-app.get("/getsharedrides", Getsharedrides);
-app.get("/shareride", Shareride);
-app.get("/updateuserlocation", Updateuserlocation);
-app.get("/updatedriverlocation", Updatedriverlocation);
-app.get("/getbookingdetails", Getbookingdetails);
-app.get("/sendmessage", Message);
-app.get("/sendresponce", Responce);
-app.get("/allmessages", Allmessage);
-app.get("/getdriverbymobile", getdriverbymobile);
-app.get("/getdriverbyaccount", getdriverbyaccount);
-app.get("/editdriveraccount", editdriveraccount);
-app.get("/startedride", startedride);
-httpServer.listen(4003, () => {
+app.post("/getusercar",Getcar);
+app.post("/getdriverslocation", getdriverslocation);
+app.post("/register", register);
+app.post("/driverregister", driverregister);
+app.post("/driverregister2", driverregister2);
+app.post("/login", login);
+app.post("/driverlogin", driverlogin);
+app.post("/logout", logout);
+app.post("/getdrivers", getdrivers);
+app.post("/searchdrivers", searchDrivers);
+app.post("/addusercar", Addcar);
+app.post("/getusercar", Getcar);
+app.post("/editusercar", Editcar);
+app.post("/deletecar", Deletecar);
+app.post("/adduseraddress", Adduseraddress);
+app.post("/getuseraddress", Getuseraddress);
+app.post("/edituseraddress", Edituseraddress);
+app.post("/deleteuseraddress", Deleteuseraddress);
+app.post("/requestdriver", Requestdriver);
+app.post("/getrequests", Getrequests);
+app.post("/getrequestsdriver", Getrequestsdriver);
+app.post("/editrequestresponce", Editresponce);
+app.post("/getdriverslocation", getdriverslocation);
+app.post("/getbookingstatus", Getbookingstatus);
+app.post("/getdriverbookings", driverbookings);
+app.post("/acceptrides", Driverstatus);
+app.post("/driverdata", Driverdata);
+app.post("/acceptride", AcceptRide);
+app.post("/uploadcarimages", UploadRideImages);
+app.post("/getimages", Getimages);
+app.post("/phonelogin", phonelogin);
+app.post("/editprofile", Editprofile);
+app.post("/getprofile", Getprofile);
+app.post("/getfilterrequests", Getfilterrequests);
+app.post("/getusers", Getusers);
+app.post("/getsharedrides", Getsharedrides);
+app.post("/shareride", Shareride);
+app.post("/updateuserlocation", Updateuserlocation);
+app.post("/updatedriverlocation", Updatedriverlocation);
+app.post("/getbookingdetails", Getbookingdetails);
+app.post("/sendmessage", Message);
+app.post("/sendresponce", Responce);
+app.post("/allmessages", Allmessage);
+app.post("/getdriverbymobile", getdriverbymobile);
+app.post("/getdriverbyaccount", getdriverbyaccount);
+app.post("/editdriveraccount", editdriveraccount);
+app.post("/startedride", startedride);
+const client = new MongoClient(uri);
+async function connectToMongoDB() {
+  try {
+    // Connect the client to the server
+    await client.connect();
+
+    console.log("Connected to MongoDB!");
+    httpServer.listen(4003, () => {
   console.log("Connected!");
 });
+    // Perform operations (example: list databases)
+    const database = client.db("users");
+    const collection = database.collection("user cars");
+
+  
+  } catch (err) {
+    console.error("Error connecting to MongoDB:", err);
+  } finally {
+    // Ensure the client will close when you finish
+    await client.close();
+  }
+}
+connectToMongoDB();
+
 
 export default app;

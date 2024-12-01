@@ -1,8 +1,13 @@
 import { db } from "../db.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-
+import { MongoClient } from 'mongodb';
+import mongoose from 'mongoose'
+import Driver from "../Schemas/Driverschema.js";
+const uri ="mongodb+srv://sunanthsamala7:MmQXJz6cCKld1vsY@users.lzhtx.mongodb.net/?retryWrites=true&w=majority&appName=users"
+const client = new MongoClient(uri);
 export const register = (req, res) => {
+  
   //CHECK EXISTING USER
   const q = "SELECT * FROM Users WHERE email = '"+req.body.email+"'";
   db.query(q, (err, data) => {
@@ -39,26 +44,52 @@ console.log(req.body)
   });
 };
 
-export const driverregister = (req, res) => {
+export const driverregister = async (req, res) => {
   //CHECK EXISTING USER
-  console.log(req.body)
-  const q = "SELECT * FROM Drivers WHERE email = '"+req.body.email+"'";
-  db.query(q, (err, data) => {
-    if (err) return console.log(err);
-    if (data.length) return res.status(409).json("User already exists!");
-
+  
     //Hash the password and create a user
-    const salt = bcrypt.genSaltSync(10);
-    const hash = bcrypt.hashSync(req.body.password, salt);
+   
+     const hashedPassword = bcrypt.hashSync("securePassword123", 10);
+ try {
+    // Create a new driver
     console.log(req.body)
-    const q = "INSERT INTO Drivers (name,DOB,email,gender,mobile,password,drivinglisence,adharno,TNC,telugu,english,hindi,totalexperience,pancard) VALUES ('"+req.body.name+"','"+req.body.dob+"','"+req.body.email+"','"+req.body.gender+"','"+req.body.mobile+"','"+hash+"','"+req.body.drivinglisence+"','"+req.body.adhar+"','"+req.body.terms+"','"+req.body.telugu+"','"+req.body.english+"','"+req.body.hindi+"','"+req.body.experience+"','"+req.body.pancard+"')";
-    //(email,gender,drivinglisence,password,mobile,adhar,name,terms,dob,pancard,telugu,hindi,english,experience)
+    await client.connect();
+  const database = client.db("users");
+    const collection = database.collection("drivers");
 
-    db.query(q, (err, data) => {
-      if (err) return console.log(err);
-      return res.status(200).json("User has been created.");
-    });
-  });
+    const driverExists = await collection.findOne({ mobile: req.body.mobile });
+    console.log("jdhfhfgf",driverExists)
+
+    if (driverExists) {
+      return res.status(200).json( "User already exists" );
+    } else {
+      const newDriver = {
+      
+      gender: req.body.gender,
+      drivingLicense: req.body.drivingLicense,
+      password: hashedPassword,
+      mobile: req.body.mobile,
+      adhar: req.body.adhar,
+      name: req.body.name,
+      terms: req.body.terms,
+      dob: req.body.dob,
+      pancard: req.body.pancard,
+      telugu: req.body.telugu,
+      hindi: req.body.hindi,
+      english: req.body.english,
+      experience: req.body.experience,
+    };
+
+    const result = await collection.insertOne(newDriver);
+    console.log("User added:", result);
+    return res.status(200).json(result.acknowledged);
+    }
+    
+
+  } catch (err) {
+    console.error("Error adding driver:", err);
+  } 
+  
 };
 
 export const driverregister2 = (req, res) => {
@@ -110,37 +141,39 @@ console.log(req.body)
 
 
 
-export const driverlogin = (req, res) => {
+export const driverlogin = async (req, res) => {
   //CHECK USER
-  console.log("hello")
-  const salt = bcrypt.genSaltSync(10);
-    const hash = bcrypt.hashSync(req.body.password, salt);
-    console.log(hash)
-console.log(req.body)
-  const q = "SELECT * FROM Drivers WHERE email = '"+req.body.email+"'";
-
-  db.query(q, (err, data) => {
-    if (err) return console.log("e2f23f",err);
-    if (data.length === 0) return console.log("usernot found");
-    console.log(data[0].password)
-    //Check password
-    const isPasswordCorrect = bcrypt.compareSync(
-      req.body.password,
-      data[0].password
-    );
-    console.log("ssss",isPasswordCorrect)
-    if (!isPasswordCorrect)
+  try {
+  const client = new MongoClient(uri);
+   await client.connect();
+   console.log("connected to mongodb")
+   const database = client.db("users");
+    const collection = database.collection("drivers");
+    const driver = await collection.findOne({email:req.body.email});
+ 
+      const isPasswordCorrect = bcrypt.compareSync(req.body.password, driver.password);
+      console.log("Password Match:", isPasswordCorrect);
+      if (!isPasswordCorrect)
       return res.status(400).json("Wrong username or password!");
 
-    const token = jwt.sign({ id: data[0].id }, "jwtkey");
-    const { password, ...other } = data[0];
+    // Generate JWT Token
+    const token = jwt.sign({ id: driver._id }, "jwtkey", { expiresIn: "1h" });
 
-    res.cookie("access_token", token, {
+    // Send response with token in a cookie
+    const { password, ...other } = driver; // Exclude password from response
+    res
+      .cookie("access_token", token, {
         httpOnly: true,
       })
       .status(200)
       .json(other);
-  });
+    console.log("Disconnected from MongoDB");
+  } catch (err) {
+    console.error("Login Error:", err);
+    res.status(500).json("Internal Server Error");
+  }
+
+ 
 };
 
 

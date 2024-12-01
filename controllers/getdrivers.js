@@ -10,6 +10,7 @@ export const getdrivers = (req, res)=>{
     });
 }
 export const getdriverslocation = (req, res)=>{
+  console.log("hekehdgbn")
     db.query("SELECT * FROM Drivers WHERE accountStatus = 'active' AND Driverstatus = 'active'AND ridestatus = 'waiting' ", (err, data) => {
       if (err) return res.status(500).send(err);
      return res.status(200).json(data);
