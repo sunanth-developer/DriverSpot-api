@@ -1,48 +1,37 @@
-import { db } from "../db.js";
+
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { MongoClient } from 'mongodb';
-import mongoose from 'mongoose'
-import Driver from "../Schemas/Driverschema.js";
 const uri ="mongodb+srv://sunanthsamala7:MmQXJz6cCKld1vsY@users.lzhtx.mongodb.net/?retryWrites=true&w=majority&appName=users"
-const client = new MongoClient(uri);
-export const register = (req, res) => {
-  
-  //CHECK EXISTING USER
-  const q = "SELECT * FROM Users WHERE email = '"+req.body.email+"'";
-  db.query(q, (err, data) => {
-    if (err) return res.status(500).json(err);
-    if (data.length) return res.status(409).json("User already exists!");
-console.log(req.body)
-    //Hash the password and create a user
-    const salt = bcrypt.genSaltSync(10);
-    const hash = bcrypt.hashSync(req.body.password, salt);
-    console.log(req.body)
-    const q = "INSERT INTO Users (name,email,password,mobileno,gender) VALUES ('"+req.body.name+"','"+req.body.email+"','"+hash+"','"+req.body.mobile+"','"+req.body.gender+"')";
-    
+const client = new MongoClient(uri);// Import your Mongoose User model
 
-    db.query(q, (err, data) => {
-      if (err) return console.log(err);
-      return res.status(200).json("User has been created.");
-    });
-  });
+export const phonelogin = async (req, res) => {
+  try {
+    console.log("hello234");
+
+    // Check if the user already exists
+    await client.connect();
+    const database = client.db("users");
+      const collection = database.collection("usersdata");
+    const existingUser = await collection.findOne({ mobileno: req.body.mobile });
+
+    if (existingUser) {
+      return res.status(200).json(existingUser); // Return the existing user
+    }
+
+    console.log(req.body);
+
+    // If user does not exist, create a new user
+    const newUser = { mobileno: req.body.mobile };
+    const savedUser = await collection.insertOne(newUser);
+
+    return res.status(200).json(savedUser); // Return the new user
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: "Internal server error" });
+  }
 };
 
-export const phonelogin = (req, res) => {
-  //CHECK EXISTING USER
-  console.log("hello234")
-  const q = "SELECT * FROM Users WHERE mobileno = '"+req.body.mobile+"'";
-  db.query(q, (err, data) => {
-    if (err) return res.status(500).json(err);
-    if (data.length) return res.status(200).json(data);
-console.log(req.body)
-    const q = "INSERT INTO Users (mobileno) VALUES ('"+req.body.mobile+"')";
-    db.query(q, (err, data) => {
-      if (err) return console.log(err);
-      return res.status(200).json(data);
-    });
-  });
-};
 
 export const driverregister = async (req, res) => {
   //CHECK EXISTING USER
@@ -109,37 +98,6 @@ export const driverregister2 = (req, res) => {
 console.log(q)
 };
 
-export const login = (req, res) => {
-  //CHECK USER
-console.log(req.body)
-  const q = "SELECT * FROM Users WHERE email = '"+req.body.email+"'";
-
-  db.query(q, (err, data) => {
-    if (err) return res.status(500).json(err);
-    if (data.length === 0) return res.status(404).json("User not found!");
-
-    //Check password
-    const isPasswordCorrect = bcrypt.compareSync(
-      req.body.password,
-      data[0].password
-    );
-
-    if (!isPasswordCorrect)
-      return res.status(400).json("Wrong username or password!");
-
-    const token = jwt.sign({ id: data[0].id }, "jwtkey");
-    const { password, ...other } = data[0];
-
-    res
-      .cookie("access_token", token, {
-        httpOnly: true,
-      })
-      .status(200)
-      .json(other);
-  });
-};
-
-
 
 export const driverlogin = async (req, res) => {
   //CHECK USER
@@ -149,7 +107,7 @@ export const driverlogin = async (req, res) => {
    console.log("connected to mongodb")
    const database = client.db("users");
     const collection = database.collection("drivers");
-    const driver = await collection.findOne({email:req.body.email});
+    const driver = await collection.findOne({mobile:req.body.mobile});
  
       const isPasswordCorrect = bcrypt.compareSync(req.body.password, driver.password);
       console.log("Password Match:", isPasswordCorrect);

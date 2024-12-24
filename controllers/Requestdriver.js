@@ -1,66 +1,101 @@
-import { db } from "../db.js";
 
-export const Requestdriver = (req, res)=>{
+import { MongoClient } from 'mongodb';
+const uri ="mongodb+srv://sunanthsamala7:MmQXJz6cCKld1vsY@users.lzhtx.mongodb.net/?retryWrites=true&w=majority&appName=users"
+const client = new MongoClient(uri);// Import your Mongoose User model
+
+export const Requestdriver = async (req, res) => {
+  try {
     console.log(req.body)
-   let q="INSERT INTO Bookings (b_id,d_id,booking_status,startlocation,destination,price,car,cartype,triptype,username,bookingtype,ride_distance,Expected_time) VALUES ('"+req.body.uid+"','"+req.body.driverids+"','"+req.body.bookingstatus+"','"+req.body.pickup+"','"+req.body.destinationp+"','"+req.body.price+"','"+req.body.carname+"','"+req.body.cartype+"','"+req.body.triptype+"','"+req.body.mobileno+"','"+req.body.bookingtype+"','"+req.body.distance+"','"+req.body.time+"')"
-    db.query(q, (err, data) => {
-      if (err)res.status(500).send(err);
-     return res.status(200).json(data);
+    const newBooking ={
+      b_id: req.body.uid,
+      d_id: req.body.driverids,
+      booking_status: req.body.bookingstatus,
+      startlocation: req.body.pickup,
+      destination: req.body.destinationp,
+      price: req.body.price,
+      car: req.body.carname,
+      cartype: req.body.cartype,
+      triptype: req.body.triptype,
+      username: req.body.mobileno,
+      bookingtype: req.body.bookingtype,
+      ride_distance: req.body.distance,
+      Expected_time: req.body.time,
+    };
+    await client.connect();
+    const database = client.db("users");
+      const collection = database.collection("bookings");
+    const savedBooking = await collection.insertOne(newBooking);
+    console.log(savedBooking)
+    return res.status(200).json(savedBooking);
+   
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+};
+export const Getrequests = async (req, res) => {
+  try {
+    const bookings = await Booking.find({ b_id: req.body.bid });
+    return res.status(200).json(bookings);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+};
+export const Getfilterrequests = async (req, res) => {
+  try {
+    const bookings = await Booking.find({
+      b_id: req.body.bid,
+      bookingtype: req.body.val,
+    });
 
-      
+    return res.status(200).json(bookings);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+};
+export const Getrequestsdriver = async (req, res) => {
+  try {
+    const bookings = await Booking.find({
+      d_id: { $elemMatch: { $eq: req.body.driverid } }, // Match driver ID in the array
     });
-}
-export const Getrequests = (req, res)=>{
-    console.log(req.body)
-   let q="SELECT * FROM  Bookings WHERE b_id='"+req.body.bid+"'"
-    db.query(q, (err, data) => {
-      if (err)res.status(500).send(err);
-       console.log(data)
-     return res.status(200).json(data);
-     
-    });
-}
 
-export const Getfilterrequests = (req, res)=>{
-    console.log(req.body)
-   let q="SELECT * FROM  Bookings WHERE b_id='"+req.body.bid+"' AND bookingtype='"+req.body.val+"'"
-    db.query(q, (err, data) => {
-      if (err)res.status(500).send(err);
-       console.log(data)
-     return res.status(200).json(data);
-     
-    });
-}
+    return res.status(200).json(bookings);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+};
+export const Editresponce = async (req, res) => {
+  try {
+    const updatedBooking = await Booking.findByIdAndUpdate(
+      req.body.id,
+      { booking_status: req.body.responce },
+      { new: true } // Return the updated document
+    );
 
+    if (!updatedBooking) {
+      return res.status(404).json({ error: "Booking not found" });
+    }
 
-export const Getrequestsdriver = (req, res)=>{
-    console.log(req.body)
-   let q= "SELECT * FROM Bookings WHERE  JSON_CONTAINS(d_id, '"+req.body.driverid+"' , '$') "
-    db.query(q, (err, data) => {
-      if (err)res.status(500).send(err);
-       console.log(data)
-     return res.status(200).json(data);
-     
-    });
-}
+    return res.status(200).json(updatedBooking);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+};
+export const Deleterequest = async (req, res) => {
+  try {
+    const deletedBooking = await Booking.findByIdAndDelete(req.body.id);
 
-export const Editresponce = (req, res)=>{
-   let q= "UPDATE Bookings SET booking_status = '"+req.body.responce+"' WHERE id = "+req.body.id+" "
-   console.log(q)
-    db.query(q, (err, data) => {
-      if (err) return res.status(500).send(err);
-       console.log(data)
-     return res.status(200).json(data);
-     
-    });
-}
-export const Deleterequest = (req, res)=>{
-   let q= "DELETE FROM Usercars WHERE id = '"+req.body.id+"'"
-   console.log(q)
-    db.query(q, (err, data) => {
-      if (err) return res.status(500).send(err);
-       console.log(data)
-     return res.status(200).json(data);
-     
-    });
-}
+    if (!deletedBooking) {
+      return res.status(404).json({ error: "Booking not found" });
+    }
+
+    return res.status(200).json({ message: "Booking deleted successfully" });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+};

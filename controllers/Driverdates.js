@@ -1,5 +1,4 @@
-import { json } from "express";
-import { db } from "../db.js";
+
 import { MongoClient, ObjectId } from 'mongodb';
 import mongoose from 'mongoose'
 const uri ="mongodb+srv://sunanthsamala7:MmQXJz6cCKld1vsY@users.lzhtx.mongodb.net/?retryWrites=true&w=majority&appName=users"
@@ -44,22 +43,45 @@ export const driverbookings = async(req, res)=>{
     console.log("Disconnected from MongoDB");
      return res.status(200).json(data);
 }
-export const startedride = (req, res)=>{
-  console.log("hello")
-  console.log(req.body.bookingtype)
-    db.query("SELECT * FROM Bookings WHERE booking_status='started' AND JSON_CONTAINS(d_id, '"+req.body.d_id+"', '$') ;", (err, data) => {
-      if (err) return res.status(500).send(err);
-     return res.status(200).json(data);
-      
-    });
-}
 
-export const Driverstatus = (req, res)=>{
-  
-    db.query("UPDATE Drivers SET Driverstatus = '"+req.body.status+"' WHERE (id = '"+req.body.d_id+"')", (err, data) => {
-      if (err) return res.status(500).send(err);
-     return res.status(200).json(data);
-      
+export const startedride = async (req, res) => {
+  try {
+    console.log("hello");
+    console.log(req.body.bookingtype);
+
+    // Fetch bookings where booking_status is 'started' and d_id matches
+    const bookings = await Booking.find({
+      booking_status: "started",
+      d_id: { $in: [req.body.d_id] }, // Assumes d_id is stored as an array
     });
-}
+
+    return res.status(200).json(bookings);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+// Import the Driver model
+
+export const Driverstatus = async (req, res) => {
+  try {
+    // Update the driver's status
+    const updatedDriver = await Driver.findByIdAndUpdate(
+      req.body.d_id,                 // Driver's ID
+      { Driverstatus: req.body.status }, // Update Driverstatus field
+      { new: true }                  // Return the updated document
+    );
+
+    if (!updatedDriver) {
+      return res.status(404).json({ error: "Driver not found" });
+    }
+
+    return res.status(200).json(updatedDriver);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+};
+
 

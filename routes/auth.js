@@ -1,7 +1,7 @@
 import express from "express";
 import { Adduseraddress, Deleteuseraddress, Edituseraddress, Getuseraddress } from "../controllers/Adduseraddress.js";
 import { Addcar, Deletecar, Editcar, Getcar } from "../controllers/Addusercar.js";
-import { register, login, logout,driverregister, driverregister2, driverlogin, phonelogin } from "../controllers/auth.js";
+import { logout,driverregister, driverregister2, driverlogin, phonelogin } from "../controllers/auth.js";
 import { Allmessage, Message, Responce } from "../controllers/Customersupport.js";
 import { driverbookings, Driverdata, Driverstatus, startedride } from "../controllers/Driverdates.js";
 import { Getbookingstatus } from "../controllers/Getbookingstatus.js";
@@ -12,10 +12,8 @@ import { Getbookingdetails, Getsharedrides, Shareride, Updatedriverlocation, Upd
 import { Editprofile, Getprofile, Getusers } from "../controllers/Userprofilr.js";
 
 const router = express.Router();
-router.post("/register", register);
 router.post("/driverregister", driverregister);
 router.post("/driverregister2", driverregister2);
-router.post("/login", login);
 router.post("/driverlogin", driverlogin);
 router.post("/logout", logout);
 router.post("/getdrivers", getdrivers);

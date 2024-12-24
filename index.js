@@ -7,7 +7,7 @@ import { createServer } from "http"; // Import createServer from http module
 import { Server } from "socket.io"; // Import Server from socket.io
 import { Addcar, Deletecar, Editcar, Getcar } from "./controllers/Addusercar.js";
 import { editdriveraccount, getdriverbyaccount, getdriverbymobile, getdrivers, getdriverslocation, searchDrivers } from "./controllers/getdrivers.js";
-import { driverlogin, driverregister, driverregister2, login, logout, phonelogin, register } from "./controllers/auth.js";
+import { driverlogin, driverregister, driverregister2, logout, phonelogin,  } from "./controllers/auth.js";
 import { Adduseraddress, Deleteuseraddress, Edituseraddress, Getuseraddress } from "./controllers/Adduseraddress.js";
 import { Editresponce, Getfilterrequests, Getrequests, Getrequestsdriver, Requestdriver } from "./controllers/Requestdriver.js";
 import { driverbookings, Driverdata, Driverstatus, startedride } from "./controllers/Driverdates.js";
@@ -31,14 +31,13 @@ app.use(cookieParser());
 app.use(cors());
 
 app.get("/",(req,res)=>{
-  res.send("hello welcome12345774")
+  res.send("hello welcome")
 })
 app.post("/getusercar",Getcar);
 app.post("/getdriverslocation", getdriverslocation);
-app.post("/register", register);
 app.post("/driverregister", driverregister);
 app.post("/driverregister2", driverregister2);
-app.post("/login", login);
+app.post("/login", phonelogin);
 app.post("/driverlogin", driverlogin);
 app.post("/logout", logout);
 app.post("/getdrivers", getdrivers);
