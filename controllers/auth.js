@@ -38,7 +38,7 @@ export const driverregister = async (req, res) => {
   
     //Hash the password and create a user
    
-     const hashedPassword = bcrypt.hashSync("securePassword123", 10);
+     const hashedPassword = bcrypt.hashSync(req.body.password, 10);
  try {
     // Create a new driver
     console.log(req.body)
@@ -100,6 +100,8 @@ console.log(q)
 
 
 export const driverlogin = async (req, res) => {
+  const pas=bcrypt.hashSync(req.body.password, 10)
+  console.log(pas)
   //CHECK USER
   try {
   const client = new MongoClient(uri);
@@ -110,6 +112,7 @@ export const driverlogin = async (req, res) => {
     const driver = await collection.findOne({mobile:req.body.mobile});
  
       const isPasswordCorrect = bcrypt.compareSync(req.body.password, driver.password);
+      
       console.log("Password Match:", isPasswordCorrect);
       if (!isPasswordCorrect)
       return res.status(400).json("Wrong username or password!");
