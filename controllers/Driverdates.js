@@ -11,7 +11,7 @@ export const Driverdata = async (req, res)=>{
   const client = new MongoClient(uri);
    const database = client.db("users");
     const collection = database.collection("drivers");
-    const data = await collection.findOne({email:req.body.d_id});
+    const data = await collection.findOne({mobile:req.body.mobile});
  await mongoose.disconnect();
     console.log("Disconnected from MongoDB");
      return res.status(200).json(data);

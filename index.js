@@ -2,6 +2,7 @@ import express from "express";
 import authRoutes from "./routes/auth.js";
 import cookieParser from "cookie-parser";
 import cors from 'cors';
+import bcrypt from "bcryptjs";
 import { db } from "./db.js";
 import { createServer } from "http"; // Import createServer from http module
 import { Server } from "socket.io"; // Import Server from socket.io
@@ -86,6 +87,8 @@ async function connectToMongoDB() {
     await client.connect();
 
     console.log("Connected to MongoDB!");
+    const hashedPassword = bcrypt.hashSync("Sunanth@12345", 10);
+    console.log(hashedPassword)
     httpServer.listen(4003, () => {
   console.log("Connected!");
 });
