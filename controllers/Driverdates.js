@@ -44,6 +44,21 @@ export const driverbookings = async(req, res)=>{
      return res.status(200).json(data);
 }
 
+export const getallbookings = async(req, res)=>{
+  
+  const query = {// Match bookingtype
+    d_id:{ $regex: `\\b${req.body.id}\\b` }, // Match any value in d_id array
+  };
+  console.log("wewedswerdf",query)
+  const client = new MongoClient(uri);
+  const database = client.db("users");
+  const collection = database.collection("bookings");
+
+  const data = await collection.find(query).toArray();
+  return res.status(200).json(data);
+
+}
+
 export const startedride = async (req, res) => {
   try {
     console.log("hello");

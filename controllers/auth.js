@@ -103,6 +103,7 @@ export const driverlogin = async (req, res) => {
   const pas=bcrypt.hashSync(req.body.password, 10)
   console.log(pas)
   //CHECK USER
+  console.log("wfqfqef",bcrypt.hashSync(req.body.password, 10))
   try {
   const client = new MongoClient(uri);
    await client.connect();

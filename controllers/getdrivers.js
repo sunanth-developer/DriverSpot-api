@@ -90,3 +90,11 @@ export const editdriveraccount = async (req, res) => {
     return res.status(500).json({ error: "Internal server error" });
   }
 };
+
+export const driverdashboard = async (req, res) => {
+  const client = new MongoClient(uri);
+  const database = client.db("users");
+  const collection = database.collection("DriverDashboard");
+  const data = await collection.find({driver_id:req.body.id}).toArray();
+  return res.status(200).json(data);
+}

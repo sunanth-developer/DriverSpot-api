@@ -7,11 +7,11 @@ import { db } from "./db.js";
 import { createServer } from "http"; // Import createServer from http module
 import { Server } from "socket.io"; // Import Server from socket.io
 import { Addcar, Deletecar, Editcar, Getcar } from "./controllers/Addusercar.js";
-import { editdriveraccount, getdriverbyaccount, getdriverbymobile, getdrivers, getdriverslocation, searchDrivers } from "./controllers/getdrivers.js";
+import { driverdashboard, editdriveraccount, getdriverbyaccount, getdriverbymobile, getdrivers, getdriverslocation, searchDrivers } from "./controllers/getdrivers.js";
 import { driverlogin, driverregister, driverregister2, logout, phonelogin,  } from "./controllers/auth.js";
 import { Adduseraddress, Deleteuseraddress, Edituseraddress, Getuseraddress } from "./controllers/Adduseraddress.js";
 import { Editresponce, Getfilterrequests, Getrequests, Getrequestsdriver, Requestdriver } from "./controllers/Requestdriver.js";
-import { driverbookings, Driverdata, Driverstatus, startedride } from "./controllers/Driverdates.js";
+import { driverbookings, Driverdata, Driverstatus, getallbookings, startedride } from "./controllers/Driverdates.js";
 import { Getbookingstatus } from "./controllers/Getbookingstatus.js";
 import { AcceptRide, Getimages, UploadRideImages } from "./controllers/Ride.js";
 import { Editprofile, Getprofile, Getusers } from "./controllers/Userprofilr.js";
@@ -80,6 +80,8 @@ app.post("/getdriverbymobile", getdriverbymobile);
 app.post("/getdriverbyaccount", getdriverbyaccount);
 app.post("/editdriveraccount", editdriveraccount);
 app.post("/startedride", startedride);
+app.post("/getallbookings", getallbookings);
+app.post("/driverdashboard", driverdashboard);
 const client = new MongoClient(uri);
 async function connectToMongoDB() {
   try {
