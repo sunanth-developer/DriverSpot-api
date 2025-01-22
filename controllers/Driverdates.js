@@ -1,4 +1,3 @@
-
 import { MongoClient, ObjectId } from 'mongodb';
 import mongoose from 'mongoose'
 const uri ="mongodb+srv://sunanthsamala7:MmQXJz6cCKld1vsY@users.lzhtx.mongodb.net/?retryWrites=true&w=majority&appName=users"
@@ -58,6 +57,22 @@ export const getallbookings = async(req, res)=>{
   return res.status(200).json(data);
 
 }
+
+
+
+export const getbulkbookings = async(req, res) => {
+    const client = new MongoClient(uri);
+    
+    const database = client.db("users");
+    const collection = database.collection("bulkBookings");
+    
+    // Fetch all documents from the collection
+    const bulkBookings = await collection.find({}).toArray();
+    
+    return res.status(200).json(bulkBookings);
+    
+  
+};
 
 export const startedride = async (req, res) => {
   try {

@@ -10,14 +10,15 @@ import { Addcar, Deletecar, Editcar, Getcar } from "./controllers/Addusercar.js"
 import { driverdashboard, editdriveraccount, getdriverbyaccount, getdriverbymobile, getdrivers, getdriverslocation, searchDrivers } from "./controllers/getdrivers.js";
 import { driverlogin, driverregister, driverregister2, logout, phonelogin,  } from "./controllers/auth.js";
 import { Adduseraddress, Deleteuseraddress, Edituseraddress, Getuseraddress } from "./controllers/Adduseraddress.js";
-import { Editresponce, Getfilterrequests, Getrequests, Getrequestsdriver, Requestdriver } from "./controllers/Requestdriver.js";
-import { driverbookings, Driverdata, Driverstatus, getallbookings, startedride } from "./controllers/Driverdates.js";
+import { createBulkBooking, Editresponce, Getfilterrequests, Getrequests, Getrequestsdriver, Requestdriver } from "./controllers/Requestdriver.js";
+import { driverbookings, Driverdata, Driverstatus, getallbookings, getbulkbookings, startedride } from "./controllers/Driverdates.js";
 import { Getbookingstatus } from "./controllers/Getbookingstatus.js";
 import { AcceptRide, Getimages, UploadRideImages } from "./controllers/Ride.js";
 import { Editprofile, Getprofile, Getusers } from "./controllers/Userprofilr.js";
 import { Getbookingdetails, Getsharedrides, Shareride, Updatedriverlocation, Updateuserlocation } from "./controllers/Sharedrides.js";
 import { Allmessage, Message, Responce } from "./controllers/Customersupport.js";
 import { MongoClient } from 'mongodb';
+import { Partnerlogin, Partnerregister } from "./controllers/Partner.js";
 const app = express();
 const httpServer = createServer(app); 
 const io = new Server(httpServer, {
@@ -82,6 +83,11 @@ app.post("/editdriveraccount", editdriveraccount);
 app.post("/startedride", startedride);
 app.post("/getallbookings", getallbookings);
 app.post("/driverdashboard", driverdashboard);
+
+app.post("/createbulkbooking", createBulkBooking);
+app.post("/getbulkbookings", getbulkbookings);
+app.post("/partnerlogin", Partnerlogin);
+app.post("/partnerregister", Partnerregister);
 const client = new MongoClient(uri);
 async function connectToMongoDB() {
   try {
@@ -89,8 +95,6 @@ async function connectToMongoDB() {
     await client.connect();
 
     console.log("Connected to MongoDB!");
-    const hashedPassword = bcrypt.hashSync("Sunanth@12345", 10);
-    console.log(hashedPassword)
     httpServer.listen(4003, () => {
   console.log("Connected!");
 });
