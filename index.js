@@ -4,7 +4,8 @@ import cookieParser from "cookie-parser";
 import cors from 'cors';
 import bcrypt from "bcryptjs";
 import { db } from "./db.js";
-import { createServer } from "http"; // Import createServer from http module
+import { createServer } from "http";
+ // Import createServer from http module
 import { Server } from "socket.io"; // Import Server from socket.io
 import { Addcar, Deletecar, Editcar, Getcar } from "./controllers/Addusercar.js";
 import { driverdashboard, editdriveraccount, getdriverbyaccount, getdriverbymobile, getdrivers, getdriverslocation, searchDrivers } from "./controllers/getdrivers.js";
@@ -20,12 +21,12 @@ import { Allmessage, Message, Responce } from "./controllers/Customersupport.js"
 import { MongoClient } from 'mongodb';
 import { Partnerlogin, Partnerregister } from "./controllers/Partner.js";
 const app = express();
-const httpServer = createServer(app); 
-const io = new Server(httpServer, {
+const server = createServer(app);
+const io = new Server(server, {
   cors: {
-    origin: "*", // Update with your client URL
-    methods: ["GET", "POST"]
-  }
+    origin: "*", // Update this to your frontend's origin for production
+    methods: ["GET", "POST"],
+  },
 });
 const uri ="mongodb+srv://sunanthsamala7:MmQXJz6cCKld1vsY@users.lzhtx.mongodb.net/?retryWrites=true&w=majority&appName=users"
 app.use(express.json());
@@ -95,7 +96,7 @@ async function connectToMongoDB() {
     await client.connect();
 
     console.log("Connected to MongoDB!");
-    httpServer.listen(4003, () => {
+    server.listen(4003, () => {
   console.log("Connected!");
 });
     // Perform operations (example: list databases)
@@ -111,6 +112,110 @@ async function connectToMongoDB() {
   }
 }
 connectToMongoDB();
+const driverSockets = {};  // Store driver socket connections
+const userSockets = {};    // Store user socket connections
+io.on('connection', (socket) => {
+  console.log('A user/driver connected:', socket.id);
+
+  socket.on('userConnected', (userId) => {
+    userSockets[userId] = socket.id;
+    console.log(`User ${userId} connected with socket ID: ${socket.id}`);
+  });
+  socket.on('driverConnected', (driverId) => {
+    driverSockets[driverId] = socket.id;
+    console.log(`Driver ${driverId} connected with socket ID: ${socket.id}`);
+  });
+
+  socket.on('bookingRequest', (bookingData) => {
+    try {
+      console.log("Booking request received:", bookingData);
+
+      // First check if bookingData exists
+      if (!bookingData) {
+        console.error("No booking data received");
+        return;
+      }
+
+      // Safely parse driver IDs with error handling
+      let driverIds = [];
+      try {
+        driverIds = bookingData.driverids ? JSON.parse(bookingData.driverids) : [];
+        console.log("Parsed driver IDs:", driverIds);
+      } catch (parseError) {
+        console.error("Error parsing driver IDs:", parseError);
+        return;
+      }
+
+      // Validate driver IDs array
+      if (!Array.isArray(driverIds) || driverIds.length === 0) {
+        console.error("Invalid or empty driver IDs array");
+        return;
+      }
+
+      const newBooking = {
+        u_id: bookingData.uid,
+        d_id: driverIds,
+        booking_status: bookingData.bookingstatus,
+        startlocation: bookingData.pickup,
+        destination: bookingData.destination,
+        price: bookingData.price,
+        car: bookingData.carname,
+        cartype: bookingData.cartype,
+        transmission: bookingData.transmission,
+        registrationNo: bookingData.registrationNo,
+        triptype: bookingData.triptype,
+        username: bookingData.mobileno,
+        bookingtype: bookingData.bookingtype,
+        ride_distance: bookingData.distance,
+        Expected_time: bookingData.time,
+        booking_time: bookingData.bookingtime,
+        booking_date: bookingData.bookingdate,
+        requestedat: bookingData.requestedAt
+      };
+
+      console.log("Processed booking data:", newBooking);
+
+      // Send booking to each driver
+      driverIds.forEach(driverId => {
+        if (driverSockets[driverId]) {
+          io.to(driverSockets[driverId]).emit('newBooking', newBooking);
+          console.log(`Sent booking to driver ${driverId}`);
+        } else {
+          console.warn(`Driver ${driverId} not connected`);
+        }
+      });
+
+    } catch (error) {
+      console.error("Error processing booking request:", error.message);
+      console.error("Error stack:", error.stack);
+    }
+  });
+
+  socket.on('driverResponse', (response) => {
+    console.log('Received driver response:', response);
+
+    const userSocketId = userSockets[response.userId];
+    if (userSocketId) {
+      io.to(userSocketId).emit('driverResponseToUser', response);
+      console.log('Response sent to user',response.userId);
+    }
+  });
+
+  socket.on('disconnect', () => {
+    console.log('User/Driver disconnected:', socket.id);
+
+    for (const key in userSockets) {
+      if (userSockets[key] === socket.id) {
+        delete userSockets[key];
+      }
+    }
+    for (const key in driverSockets) {
+      if (driverSockets[key] === socket.id) {
+        delete driverSockets[key];
+      }
+    }
+  });
+});
 
 
 export default app;
