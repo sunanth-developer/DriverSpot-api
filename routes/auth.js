@@ -8,7 +8,7 @@ import { Getbookingstatus } from "../controllers/Getbookingstatus.js";
 import { editdriveraccount, getdriverbyaccount, getdriverbymobile, getdrivers, getdriverslocation, searchDrivers } from "../controllers/getdrivers.js";
 import { Editresponce, Getfilterrequests, Getrequests, Getrequestsdriver, Requestdriver } from "../controllers/Requestdriver.js";
 import { AcceptRide, Getimages, UploadRideImages } from "../controllers/Ride.js";
-import { Getbookingdetails, Getsharedrides, Shareride, Updatedriverlocation, Updateuserlocation } from "../controllers/Sharedrides.js";
+import { Getbookingdetails, Getsharedrides, Shareride,  Updateuserlocation } from "../controllers/Sharedrides.js";
 import { Editprofile, Getprofile, Getusers } from "../controllers/Userprofilr.js";
 
 const router = express.Router();
@@ -46,7 +46,6 @@ router.post("/getusers", Getusers);
 router.post("/getsharedrides", Getsharedrides);
 router.post("/shareride", Shareride);
 router.post("/updateuserlocation", Updateuserlocation);
-router.post("/updatedriverlocation", Updatedriverlocation);
 router.post("/getbookingdetails", Getbookingdetails);
 router.post("/sendmessage", Message);
 router.post("/sendresponce", Responce);

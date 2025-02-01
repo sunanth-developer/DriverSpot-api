@@ -43,6 +43,45 @@ export const driverbookings = async(req, res)=>{
      return res.status(200).json(data);
 }
 
+
+export const ongoingride = async(req, res) => {
+  try {
+    const client = new MongoClient(uri);
+    await client.connect();
+    
+    // Build query dynamically based on provided parameters
+    const query = {
+      // Use $in operator to match either status
+      booking_status: { $in: ["ongoing", "started"] }
+    };
+
+    // Add driver ID to query if provided
+    if (req.body.driverid) {
+      query.d_id = req.body.driverid;
+    }
+
+    // Add user ID to query if provided
+    if (req.body.userid) {
+      query.b_id = req.body.userid;
+    }
+
+    console.log("Query:", query);  // Debug log
+
+    // Query the collection
+    const database = client.db("users");
+    const collection = database.collection("bookings");
+    const data = await collection.find(query).toArray();
+    
+    console.log("Ongoing rides data:", data);
+    return res.status(200).json(data);
+
+  } catch (err) {
+    console.error("Error fetching ongoing rides:", err);
+    return res.status(500).json({ error: "Internal server error" });
+  } 
+};
+
+ 
 export const getallbookings = async(req, res)=>{
   
   const query = {// Match bookingtype
@@ -76,20 +115,36 @@ export const getbulkbookings = async(req, res) => {
 
 export const startedride = async (req, res) => {
   try {
-    console.log("hello");
-    console.log(req.body.bookingtype);
+    const client = new MongoClient(uri);
+    await client.connect();
+    
+    const database = client.db("users");
+    const collection = database.collection("bookings");
 
-    // Fetch bookings where booking_status is 'started' and d_id matches
-    const bookings = await Booking.find({
-      booking_status: "started",
-      d_id: { $in: [req.body.d_id] }, // Assumes d_id is stored as an array
+    // Update the document
+    const result = await collection.updateOne(
+      { _id: new ObjectId(req.body.bookingId) }, // Find by booking ID
+      { 
+        $set: {
+          d_id: req.body.driverId, // Replace array with single driver ID
+          booking_status: "ongoing"  // Update booking status
+        }
+      }
+    );
+
+    if (result.modifiedCount === 0) {
+      return res.status(404).json({ error: "Booking not found" });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Ride started successfully"
     });
 
-    return res.status(200).json(bookings);
   } catch (err) {
-    console.error(err);
+    console.error("Error starting ride:", err);
     return res.status(500).json({ error: "Internal server error" });
-  }
+  } 
 };
 
 // Import the Driver model
@@ -112,6 +167,139 @@ export const Driverstatus = async (req, res) => {
     console.error(err);
     return res.status(500).json({ error: "Internal server error" });
   }
+};
+
+export const getDriverDetails = async(req, res) => {
+  try {
+    const client = new MongoClient(uri);
+    await client.connect();
+    
+    const database = client.db("users");
+    const collection = database.collection("drivers");
+
+    // Find driver by ID
+    console.log("driverid",req.body)
+    const driverDetails = await collection.findOne(
+      { _id: new ObjectId(req.body.driverId) },
+      {
+        projection: {
+          name: 1,
+          rating: 1,
+          ridescompleted: 1,
+          mobile: 1, // Including vehicle details if needed
+        }
+      }
+    );
+
+    if (!driverDetails) {
+      return res.status(404).json({ 
+        success: false,
+        message: "Driver not found" 
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: driverDetails
+    });
+
+  } catch (err) {
+    console.error("Error fetching driver details:", err);
+    return res.status(500).json({ 
+      success: false,
+      error: "Internal server error" 
+    });
+  } 
+};
+
+export const updateDriverLocation = async (req, res) => {
+
+console.log("driverid",req.body)
+try {
+    const client = new MongoClient(uri);
+    await client.connect();
+    
+    const database = client.db("users");
+    const collection = database.collection("drivers");
+    // Update driver's location
+    const result = await collection.updateOne(
+      
+      { _id: new ObjectId(req.body.driverId) },
+      { 
+        $set: {
+            latitude: req.body.latitude,
+            longitude: req.body.longitude,
+            lastUpdated: new Date()  // Optional: track when location was last updated
+        }
+      }
+    );
+
+    if (result.modifiedCount === 0) {
+      return res.status(404).json({ 
+        success: false,
+        message: "Driver not found" 
+      });
+    }
+
+   
+
+    return res.status(200).json({
+      success: true,
+      message: "Location updated successfully"
+    });
+
+  } catch (err) {
+    console.error("Error updating driver location:", err);
+    return res.status(500).json({ 
+      success: false,
+      error: "Internal server error" 
+    });
+  }
+  
+};
+
+export const updateRideStatus = async (req, res) => {
+  try {
+    const client = new MongoClient(uri);
+    await client.connect();
+    
+    const database = client.db("users");
+    const collection = database.collection("bookings");
+
+    // Update driver's ride status
+    const result = await collection.updateOne(
+      { _id: new ObjectId(req.body.bookingid) },
+      { 
+        $set: {
+          ride_status: req.body.status, // "waiting", "ongoing", "completed"
+          lastStatusUpdate: new Date()
+        }
+      }
+    );
+
+    if (result.modifiedCount === 0) {
+      return res.status(404).json({ 
+        success: false,
+        message: "Driver not found" 
+      });
+    }
+
+    // Emit status update through socket if needed
+   
+
+    return res.status(200).json({
+      success: true,
+      message: "Ride status updated successfully",
+      status: req.body.status
+    });
+
+  } catch (err) {
+    console.error("Error updating ride status:", err);
+    return res.status(500).json({ 
+      success: false,
+      error: "Internal server error" 
+    });
+  } 
 };
 
 

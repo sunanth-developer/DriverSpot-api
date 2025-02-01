@@ -81,21 +81,3 @@ export const Updateuserlocation = async (req, res) => {
     return res.status(500).json({ error: "Internal server error" });
   }
 };
-export const Updatedriverlocation = async (req, res) => {
-  try {
-    const updatedRide = await SharedRide.updateOne(
-      { d_id: req.body.driverid },
-      { $set: { driverlocation: req.body.driverlocation } }
-    );
-
-    if (updatedRide.nModified === 0) {
-      return res.status(404).json({ error: "Ride not found" });
-    }
-
-    return res.status(200).json({ message: "Driver location updated" });
-  } catch (err) {
-    console.error(err);
-    return res.status(500).json({ error: "Internal server error" });
-  }
-};
-
