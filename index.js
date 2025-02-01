@@ -12,11 +12,11 @@ import { driverdashboard, editdriveraccount, getdriverbyaccount, getdriverbymobi
 import { driverlogin, driverregister, driverregister2, logout, phonelogin,  } from "./controllers/auth.js";
 import { Adduseraddress, Deleteuseraddress, Edituseraddress, Getuseraddress } from "./controllers/Adduseraddress.js";
 import { createBulkBooking, Editresponce, Getfilterrequests, Getrequests, Getrequestsdriver, Requestdriver } from "./controllers/Requestdriver.js";
-import { driverbookings, Driverdata, Driverstatus, getallbookings, getbulkbookings, startedride } from "./controllers/Driverdates.js";
+import { driverbookings, Driverdata, Driverstatus, getallbookings, getbulkbookings, getDriverDetails, ongoingride, startedride, updateRideStatus } from "./controllers/Driverdates.js";
 import { Getbookingstatus } from "./controllers/Getbookingstatus.js";
 import { AcceptRide, Getimages, UploadRideImages } from "./controllers/Ride.js";
 import { Editprofile, Getprofile, Getusers } from "./controllers/Userprofilr.js";
-import { Getbookingdetails, Getsharedrides, Shareride, Updatedriverlocation, Updateuserlocation } from "./controllers/Sharedrides.js";
+import { Getbookingdetails, Getsharedrides, Shareride, Updateuserlocation } from "./controllers/Sharedrides.js";
 import { Allmessage, Message, Responce } from "./controllers/Customersupport.js";
 import { MongoClient } from 'mongodb';
 import { Partnerlogin, Partnerregister } from "./controllers/Partner.js";
@@ -73,7 +73,6 @@ app.post("/getusers", Getusers);
 app.post("/getsharedrides", Getsharedrides);
 app.post("/shareride", Shareride);
 app.post("/updateuserlocation", Updateuserlocation);
-app.post("/updatedriverlocation", Updatedriverlocation);
 app.post("/getbookingdetails", Getbookingdetails);
 app.post("/sendmessage", Message);
 app.post("/sendresponce", Responce);
@@ -84,11 +83,13 @@ app.post("/editdriveraccount", editdriveraccount);
 app.post("/startedride", startedride);
 app.post("/getallbookings", getallbookings);
 app.post("/driverdashboard", driverdashboard);
-
+app.post("/ongoingride", ongoingride);
 app.post("/createbulkbooking", createBulkBooking);
 app.post("/getbulkbookings", getbulkbookings);
 app.post("/partnerlogin", Partnerlogin);
 app.post("/partnerregister", Partnerregister);
+app.post("/getdriverdetails", getDriverDetails);
+app.post("/updateRideStatus", updateRideStatus);
 const client = new MongoClient(uri);
 async function connectToMongoDB() {
   try {
@@ -112,20 +113,27 @@ async function connectToMongoDB() {
   }
 }
 connectToMongoDB();
-const driverSockets = {};  // Store driver socket connections
-const userSockets = {};    // Store user socket connections
-io.on('connection', (socket) => {
-  console.log('A user/driver connected:', socket.id);
 
+// Store active sessions
+const userSockets = new Map();
+const driverSockets = new Map();
+const rideSessions = new Map();
+
+io.on('connection', (socket) => {
+  console.log('New connection:', socket.id);
+
+  // Existing connection handlers
   socket.on('userConnected', (userId) => {
-    userSockets[userId] = socket.id;
+    userSockets.set(userId, socket.id);
     console.log(`User ${userId} connected with socket ID: ${socket.id}`);
   });
+
   socket.on('driverConnected', (driverId) => {
-    driverSockets[driverId] = socket.id;
+    driverSockets.set(driverId, socket.id);
     console.log(`Driver ${driverId} connected with socket ID: ${socket.id}`);
   });
 
+  // Existing booking request handler
   socket.on('bookingRequest', (bookingData) => {
     try {
       console.log("Booking request received:", bookingData);
@@ -151,13 +159,14 @@ io.on('connection', (socket) => {
         console.error("Invalid or empty driver IDs array");
         return;
       }
-
+      const pickup = JSON.parse(bookingData.pickup)
+      const destination=JSON.parse(bookingData.destinationp)
       const newBooking = {
         u_id: bookingData.uid,
         d_id: driverIds,
         booking_status: bookingData.bookingstatus,
-        startlocation: bookingData.pickup,
-        destination: bookingData.destination,
+        startlocation: pickup,
+        destination: destination,
         price: bookingData.price,
         car: bookingData.carname,
         cartype: bookingData.cartype,
@@ -170,15 +179,17 @@ io.on('connection', (socket) => {
         Expected_time: bookingData.time,
         booking_time: bookingData.bookingtime,
         booking_date: bookingData.bookingdate,
-        requestedat: bookingData.requestedAt
+        requestedat: bookingData.requestedAt,
+        booking_id: bookingData.bookingid
       };
 
       console.log("Processed booking data:", newBooking);
 
       // Send booking to each driver
       driverIds.forEach(driverId => {
-        if (driverSockets[driverId]) {
-          io.to(driverSockets[driverId]).emit('newBooking', newBooking);
+        if (driverSockets.get(driverId)) {
+          io.to(driverSockets.get(driverId)).emit('newBooking', newBooking);
+          console.log("sent data ",newBooking)
           console.log(`Sent booking to driver ${driverId}`);
         } else {
           console.warn(`Driver ${driverId} not connected`);
@@ -191,31 +202,157 @@ io.on('connection', (socket) => {
     }
   });
 
+  // Existing driver response handler
   socket.on('driverResponse', (response) => {
-    console.log('Received driver response:', response);
+    try {
+      console.log('Received driver response:', response);
 
-    const userSocketId = userSockets[response.userId];
-    if (userSocketId) {
-      io.to(userSocketId).emit('driverResponseToUser', response);
-      console.log('Response sent to user',response.userId);
+      const userSocketId = userSockets.get(response.userId);
+      console.log('User socket ID:', userSocketId);
+      console.log('All user sockets:', userSockets);
+
+      if (userSocketId) {
+        // Emit to specific user
+        io.to(userSocketId).emit('driverResponseToUser', {
+          status: response.status,
+          driverName: response.driverName,
+          accepted: response.accepted,
+          userId: response.userId,
+          booking_id: response.bookingid,
+          driverid: response.driverId,
+          // Add any other necessary data
+        });
+
+        // Verify emission
+        const userSocket = io.sockets.sockets.get(userSocketId);
+        console.log('Is user socket connected?', userSocket?.connected);
+      } else {
+        console.warn('User socket not found for ID:', response.userId);
+      }
+    } catch (error) {
+      console.error('Error sending driver response:', error);
     }
   });
 
-  socket.on('disconnect', () => {
-    console.log('User/Driver disconnected:', socket.id);
+  // New ride tracking handlers
+  socket.on('joinRideRoom', (data) => {
+    try {
+      const { bookingId, userId, driverId } = data;
+      console.log('Joining ride room:', { bookingId, userId, driverId });
 
-    for (const key in userSockets) {
-      if (userSockets[key] === socket.id) {
-        delete userSockets[key];
-      }
+      socket.join(`ride_${bookingId}`);
+      rideSessions.set(bookingId, {
+        userId,
+        driverId,
+        socketId: socket.id,
+        status: 'WAITING'
+      });
+    } catch (error) {
+      console.error('Error joining ride room:', error);
     }
-    for (const key in driverSockets) {
-      if (driverSockets[key] === socket.id) {
-        delete driverSockets[key];
+  });
+
+  socket.on('updateDriverLocation', (data) => {
+    try {
+      const { bookingId, latitude, longitude } = data;
+      io.to(`ride_${bookingId}`).emit('driverLocationUpdate', {
+        latitude,
+        longitude,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error('Error updating driver location:', error);
+    }
+  });
+
+  socket.on('driverReachedPickup', (data) => {
+    try {
+      
+      const { bookingId } = data;
+      io.to(`ride_${bookingId}`).emit('driverReachedPickup', {
+        bookingId,
+        timestamp: new Date().toISOString()
+      });
+      console.log("driverReachedPickup",bookingId)
+    } catch (error) {
+      console.error('Error handling driver arrival:', error);
+    }
+  });
+
+  socket.on('startRide', async (data) => {
+    try {
+      const { bookingId } = data;
+      const client = new MongoClient(uri);
+      await client.connect();
+      
+      await client.db("users").collection("bookings").updateOne(
+        { _id: new ObjectId(bookingId) },
+        { $set: { booking_status: "ongoing" } }
+      );
+
+      io.to(`ride_${bookingId}`).emit('rideStarted', {
+        bookingId,
+        timestamp: new Date().toISOString()
+      });
+
+      await client.close();
+    } catch (error) {
+      console.error('Error starting ride:', error);
+    }
+  });
+
+  socket.on('completeRide', async (data) => {
+    try {
+      const { bookingId } = data;
+      const client = new MongoClient(uri);
+      await client.connect();
+      
+      await client.db("users").collection("bookings").updateOne(
+        { _id: new ObjectId(bookingId) },
+        { $set: { booking_status: "completed" } }
+      );
+
+      io.to(`ride_${bookingId}`).emit('rideCompleted', {
+        bookingId,
+        timestamp: new Date().toISOString()
+      });
+
+      rideSessions.delete(bookingId);
+      await client.close();
+    } catch (error) {
+      console.error('Error completing ride:', error);
+    }
+  });
+
+  // Enhanced disconnect handler
+  socket.on('disconnect', () => {
+    try {
+      console.log('Client disconnected:', socket.id);
+
+      // Clean up user sockets
+      for (const [userId, socketId] of userSockets.entries()) {
+        if (socketId === socket.id) {
+          userSockets.delete(userId);
+        }
       }
+
+      // Clean up driver sockets
+      for (const [driverId, socketId] of driverSockets.entries()) {
+        if (socketId === socket.id) {
+          driverSockets.delete(driverId);
+        }
+      }
+
+      // Clean up ride sessions
+      for (const [bookingId, session] of rideSessions.entries()) {
+        if (session.socketId === socket.id) {
+          rideSessions.delete(bookingId);
+        }
+      }
+    } catch (error) {
+      console.error('Error handling disconnect:', error);
     }
   });
 });
-
 
 export default app;
