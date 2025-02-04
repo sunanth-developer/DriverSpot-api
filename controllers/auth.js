@@ -81,23 +81,6 @@ export const driverregister = async (req, res) => {
   
 };
 
-export const driverregister2 = (req, res) => {
-
-   const { email,sedantype,suvtype,hatchbacktype,luxurytype } = req.body;
-
-  // Convert sedanType array to a comma-separated string (e.g., "manual,auto")
-  const sedanTypeStr = sedantype.join(',');
-  const suvTypeStr = suvtype.join(',');
-  const hatchbackTypeStr = hatchbacktype.join(',');
-  const luxuryTypeStr = luxurytype.join(',');  // E.g., ['manual', 'auto'] becomes 'manual,auto'
-  const q = "UPDATE Drivers SET sedantype='"+sedanTypeStr+"',suvtype='"+suvTypeStr+"',hatchbacktype='"+hatchbackTypeStr+"',luxurytype='"+luxuryTypeStr+"' WHERE email = '"+req.body.email+"'"
-   db.query(q, (err, data) => {
-      if (err) return console.log(err);
-      return res.status(200).json("User has been created.");
-    });
-console.log(q)
-};
-
 
 export const driverlogin = async (req, res) => {
   const pas=bcrypt.hashSync(req.body.password, 10)

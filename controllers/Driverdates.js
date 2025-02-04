@@ -25,7 +25,6 @@ export const driverbookings = async(req, res)=>{
 
     const client = new MongoClient(uri);
   
-  const id = [req.body.id]
     // Build the query
     const query = {
       bookingtype: req.body.bookingtype, // Match bookingtype
