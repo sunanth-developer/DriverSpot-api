@@ -6,19 +6,16 @@ export const Addcar = async (req, res) => {
   await client.connect();
   const database = client.db("users");
     const collection = database.collection("user cars");
-
   try {
     const newCar= {
-      cartype: req.body.cartype,
-      carname: req.body.carname,
-      uid: req.body.uid,
-      geartype: req.body.geartype,
-      registrationno: req.body.registrationno,
+      cartype: req.body.newCar.cartype,
+      carname: req.body.newCar.carname,
+      uid: req.body.newCar.uid,
+      geartype: req.body.newCar.geartype,
+      registrationno: req.body.newCar.registrationno,
     };
 
-    // Save the new car to the database
     const result = await collection.insertOne(newCar);
-    console.log("car added:", result);
     return res.status(200).json(result.acknowledged);
   } catch (err) {
     console.error(err);
@@ -41,15 +38,18 @@ export const Getcar = async (req, res) => {
     return res.status(500).json({ error: "Internal server error" });
   } 
 };
+
 export const Editcar = async (req, res) => {
   try {
     const { id, updates } = req.body;
 
     // Update the car details by its ID
-    const updatedCar = await UserCar.findByIdAndUpdate(
-      id,            // ID of the car to update
-      updates,       // Fields to update
-      { new: true }  // Return the updated document
+    await client.connect();
+    const database = client.db("users");
+    const collection = database.collection("user cars");
+    const updatedCar = await collection.updateOne(
+      { _id: new ObjectId(id) },
+      { $set: updates }
     );
 
     if (!updatedCar) {
@@ -63,6 +63,8 @@ export const Editcar = async (req, res) => {
   }
 };
 export const Deletecar = async (req, res) => {
+
+  console.log("qfqfq33q",req.body)
   try {
     await client.connect();
     const database = client.db("users");

@@ -24,3 +24,18 @@ export const Getusers = (req, res)=>{
      return res.status(200).json(data);
     });
 }
+
+export const getalluserbookings = async(req, res)=>{
+  
+  const query = {// Match bookingtype
+    b_id:req.body.id, // Match any value in d_id array
+  };
+  console.log("wewedswerdf",query)
+  const client = new MongoClient(uri);
+  const database = client.db("users");
+  const collection = database.collection("bookings");
+
+  const data = await collection.find(query).toArray();
+  return res.status(200).json(data);
+
+}

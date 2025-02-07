@@ -8,15 +8,15 @@ const client = new MongoClient(uri);// Import your Mongoose User model
 
 export const Adduseraddress = async (req, res) => {
   try {
-    console.log(req.body);
+    console.log("qfqfq33q",req.body);
     await client.connect();
     const database = client.db("users");
       const collection = database.collection("user address");
     // Create a new address document
     const newAddress = {
-      addresstitle: req.body.addresstitle,
-      address: req.body.address,
-      uid: req.body.uid, // Assuming `uid` is a reference to a user
+      addresstitle: req.body.newAddress.addresstitle,
+      address: req.body.newAddress.address,
+      uid: req.body.newAddress.uid, // Assuming `uid` is a reference to a user
     }
 
     // Save the address to the database
@@ -55,10 +55,9 @@ export const Edituseraddress = async (req, res) => {
     const database = client.db("users");
       const collection = database.collection("user address");
     // Update the address with the given ID
-    const updatedAddress = await collection.findByIdAndUpdate(
-      id,            // ID of the address to update
-      updates,       // Fields to update
-      { new: true }  // Return the updated document
+    const updatedAddress = await collection.updateOne(
+      { _id: new ObjectId(id) },
+      { $set: updates }
     );
 
     if (!updatedAddress) {
