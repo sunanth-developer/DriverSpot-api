@@ -9,13 +9,14 @@ import { driverdashboard, editdriveraccount, getdriverbyaccount, getdriverbymobi
 import { driverlogin, driverregister,  logout, phonelogin,  } from "./controllers/auth.js";
 import { Adduseraddress, Deleteuseraddress, Edituseraddress, Getuseraddress } from "./controllers/Adduseraddress.js";
 import { createBulkBooking, Editresponce, Getfilterrequests, Getrequests, Getrequestsdriver, Requestdriver } from "./controllers/Requestdriver.js";
-import { driverbookings, Driverdata, Driverstatus, getallbookings, getbulkbookings, getDriverDetails, ongoingride, startedride, updateRideStatus } from "./controllers/Driverdates.js";
+import { driverbookings, Driverdata, Driverstatus, getallbookings, getbulkbookings, getDriverDetails, ongoingride, startedride, updatebookingstatus, updateotpstatus, updateRideStatus } from "./controllers/Driverdates.js";
 
-import { AcceptRide, Getimages, UploadRideImages } from "./controllers/Ride.js";
+import { UploadRideImages } from "./controllers/Ride.js";
 import { Editprofile, Getprofile, Getusers, getalluserbookings } from "./controllers/Userprofilr.js";
 import { Getbookingdetails, Getsharedrides, Shareride, Updateuserlocation } from "./controllers/Sharedrides.js";
-import { MongoClient } from 'mongodb';
+import { MongoClient, ObjectId } from 'mongodb';
 import { Partnerlogin, Partnerregister } from "./controllers/Partner.js";
+import { pickupanddropbooking,  logisticsbooking, valetbooking, partnerbookings } from "./controllers/Partners_booking.js";
 const app = express();
 const server = createServer(app);
 const io = new Server(server, {
@@ -32,6 +33,7 @@ app.use(cors());
 app.get("/",(req,res)=>{
   res.send("hello welcome")
 })
+
 app.post("/getusercar",Getcar);
 app.post("/getdriverslocation", getdriverslocation);
 app.post("/driverregister", driverregister);
@@ -56,9 +58,7 @@ app.post("/getdriverslocation", getdriverslocation);
 app.post("/getdriverbookings", driverbookings);
 app.post("/acceptrides", Driverstatus);
 app.post("/driverdata", Driverdata);
-app.post("/acceptride", AcceptRide);
 app.post("/uploadcarimages", UploadRideImages);
-app.post("/getimages", Getimages);
 app.post("/phonelogin", phonelogin);
 app.post("/editprofile", Editprofile);
 app.post("/getprofile", Getprofile);
@@ -82,6 +82,13 @@ app.post("/partnerregister", Partnerregister);
 app.post("/getdriverdetails", getDriverDetails);
 app.post("/updateRideStatus", updateRideStatus);
 app.post("/getalluserbookings", getalluserbookings);
+app.post("/updatebookingstatus", updatebookingstatus);
+app.post("/updateotpstatus", updateotpstatus);
+app.post("/pickupanddropbooking", pickupanddropbooking);
+app.post("/logisticsbooking", logisticsbooking);
+app.post("/valetbooking", valetbooking);
+app.post("/partnerbookings", partnerbookings);
+app.post("/uploadimage", UploadRideImages);
 const client = new MongoClient(uri);
 async function connectToMongoDB() {
   try {
@@ -105,6 +112,8 @@ async function connectToMongoDB() {
   }
 }
 connectToMongoDB();
+
+
 
 // Store active sessions
 const userSockets = new Map();
@@ -263,6 +272,7 @@ io.on('connection', (socket) => {
       const { bookingId } = data;
       io.to(`ride_${bookingId}`).emit('driverReachedPickup', {
         bookingId,
+        status: 'DRIVER_ARRIVED',
         timestamp: new Date().toISOString()
       });
       console.log("driverReachedPickup",bookingId)
@@ -273,35 +283,78 @@ io.on('connection', (socket) => {
 
   socket.on('startRide', async (data) => {
     try {
-      const { bookingId } = data;
-      const client = new MongoClient(uri);
-      await client.connect();
-      
-      await client.db("users").collection("bookings").updateOne(
-        { _id: new ObjectId(bookingId) },
-        { $set: { booking_status: "ongoing" } }
-      );
+        const { bookingId, driverId, latitude, longitude } = data;
+        const client = new MongoClient(uri);
+        await client.connect();
+        
+        console.log("Received startRide event:", data);
 
-      io.to(`ride_${bookingId}`).emit('rideStarted', {
-        bookingId,
-        timestamp: new Date().toISOString()
-      });
+        // Ensure the driver joins the correct ride room
+        socket.join(`booking_${bookingId}`);
+        console.log(`Driver joined room: booking_${bookingId}`);
 
-      await client.close();
+        // Update booking status in MongoDB
+        const updateResult = await client.db("users").collection("bookings").updateOne(
+            { _id: new ObjectId(bookingId) },
+            { $set: { 
+                ride_status: "ONGOING",
+                driverlatitude: latitude,
+                driverlongitude: longitude,
+                started_at: new Date()
+            } }
+        );
+
+
+        // Emit the event to the ride room so the user gets notified
+        io.to(`ride_${bookingId}`).emit('rideStarted', {
+            bookingId,
+            driverId,
+            location: { latitude, longitude },
+            timestamp: new Date().toISOString()
+        });
+
+        console.log(`Emitted rideStarted event to booking_${bookingId}`);
+
+        await client.close();
     } catch (error) {
-      console.error('Error starting ride:', error);
+        console.error('Error starting ride:', error);
     }
-  });
-
+});
   socket.on('completeRide', async (data) => {
     try {
       const { bookingId } = data;
       const client = new MongoClient(uri);
       await client.connect();
       
+      
+      // Update booking status and final location
       await client.db("users").collection("bookings").updateOne(
         { _id: new ObjectId(bookingId) },
-        { $set: { booking_status: "completed" } }
+        { 
+          $set: { 
+            booking_status: "completed",
+            ride_status: "completed",
+            final_location: {
+              latitude: data.latitude,
+              longitude: data.longitude
+            },
+            trip_summary: data.tripSummary,
+            completed_at: new Date()
+          } 
+        }
+      );
+
+      // Update driver status
+      await client.db("users").collection("drivers").updateOne(
+        { _id: new ObjectId(data.driverId) },
+        { 
+          $set: { 
+            ridestatus: "waiting",
+            latitude: String(data.latitude),
+            longitude: String(data.longitude),
+            lastLocationUpdate: new Date()
+          } 
+        }
       );
 
       io.to(`ride_${bookingId}`).emit('rideCompleted', {
@@ -313,6 +366,32 @@ io.on('connection', (socket) => {
       await client.close();
     } catch (error) {
       console.error('Error completing ride:', error);
+    }
+  });
+
+  socket.on('endRide', async (data) => {
+    try {
+      const { bookingId, driverId, finalLocation, tripSummary } = data;
+      console.log('Ending ride:', { bookingId, driverId, finalLocation });
+
+
+      // Emit ride completion to the room
+      io.to(`ride_${bookingId}`).emit('rideCompleted', {
+        bookingId,
+        driverId,
+        finalLocation,
+        tripSummary,
+        timestamp: new Date().toISOString()
+      });
+
+      // Clean up ride session
+      rideSessions.delete(bookingId);
+
+      await client.close();
+      console.log(`Ride ${bookingId} completed successfully`);
+
+    } catch (error) {
+      console.error('Error ending ride:', error);
     }
   });
 

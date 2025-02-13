@@ -4,14 +4,14 @@ const uri ="mongodb+srv://sunanthsamala7:MmQXJz6cCKld1vsY@users.lzhtx.mongodb.ne
 
 
 export const Driverdata = async (req, res)=>{
-  
-  try {
+  console.log("req.body.mobile",req.body.mobile)
  console.log("jdbdwbkqwbduqbwquw")
+  try {
   const client = new MongoClient(uri);
    const database = client.db("users");
     const collection = database.collection("drivers");
     const data = await collection.findOne({mobile:req.body.mobile});
- await mongoose.disconnect();
+    console.log("data",data)
     console.log("Disconnected from MongoDB");
      return res.status(200).json(data);
   } catch (err) {
@@ -51,7 +51,7 @@ export const ongoingride = async(req, res) => {
     // Build query dynamically based on provided parameters
     const query = {
       // Use $in operator to match either status
-      booking_status: { $in: ["ongoing", "started"] }
+      booking_status: { $in: ["ACCEPTED", "DRIVER_ARRIVED","ONGOING"] }
     };
 
     // Add driver ID to query if provided
@@ -126,7 +126,8 @@ export const startedride = async (req, res) => {
       { 
         $set: {
           d_id: req.body.driverId, // Replace array with single driver ID
-          booking_status: "ongoing"  // Update booking status
+          booking_status: "ACCEPTED",
+          ride_status:"ACCEPTED" // Update booking status
         }
       }
     );
@@ -146,7 +147,75 @@ export const startedride = async (req, res) => {
   } 
 };
 
+export const updatebookingstatus = async (req, res) => {
+  try {
+    const client = new MongoClient(uri);
+    await client.connect();
+    
+    const database = client.db("users");
+    const collection = database.collection("bookings");
+
+    // Update the document
+    const result = await collection.updateOne(
+      { _id: new ObjectId(req.body.bookingId) }, // Find by booking ID
+      { 
+        $set: {
+          booking_status:req.body.status  // Update booking status
+        }
+      }
+    );
+
+    if (result.modifiedCount === 0) {
+      return res.status(404).json({ error: "Booking not found" });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Ride started successfully"
+    });
+
+  } catch (err) {
+    console.error("Error starting ride:", err);
+    return res.status(500).json({ error: "Internal server error" });
+  } 
+};
+
+
+export const updateotpstatus = async (req, res) => {
+  try {
+    const client = new MongoClient(uri);
+    await client.connect();
+    
+    const database = client.db("users");
+    const collection = database.collection("bookings");
+
+    // Update the document
+    console.log("req.body.bookingid",req.body.bookingid)
+    const result = await collection.updateOne(
+      { _id: new ObjectId(req.body.bookingid) }, // Find by booking ID
+      { 
+        $set: {
+          otp_status:req.body.otpverified  // Update booking status
+        }
+      }
+    );
+    console.log("result",result,req.body.bookingId,req.body.otpverified)
+    if (result.acknowledged === false) {
+      return res.status(404).json({ error: "Booking not found" });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Ride started successfully"
+    });
+
+  } catch (err) {
+    console.error("Error starting ride:", err);
+    return res.status(500).json({ error: "Internal server error" });
+  } 
+};
 // Import the Driver model
+
 
 export const Driverstatus = async (req, res) => {
   try {

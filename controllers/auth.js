@@ -94,7 +94,9 @@ export const driverlogin = async (req, res) => {
    const database = client.db("users");
     const collection = database.collection("drivers");
     const driver = await collection.findOne({mobile:req.body.mobile});
- 
+    console.log("driver",driver)
+    console.log("req.body.password",req.body.password)
+    console.log("driver.password",driver.password)
       const isPasswordCorrect = bcrypt.compareSync(req.body.password, driver.password);
       
       console.log("Password Match:", isPasswordCorrect);

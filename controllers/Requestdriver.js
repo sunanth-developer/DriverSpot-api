@@ -88,6 +88,9 @@ export const Requestdriver = async (req, res) => {
       booking_date: req.body.bookingdate,
       requestedat: req.body.requestedAt,
       selected_hours: req.body.selectedHours,
+      OTP: req.body.OTP,
+      otp_status: req.body.otpverified,
+      chauffeur_type: req.body.chauffeurType,
     };
     await client.connect();
     const database = client.db("users");
