@@ -1,6 +1,6 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { MongoClient } from 'mongodb';
+import { MongoClient, ObjectId } from 'mongodb';
 const uri ="mongodb+srv://sunanthsamala7:MmQXJz6cCKld1vsY@users.lzhtx.mongodb.net/?retryWrites=true&w=majority&appName=users"
 const client = new MongoClient(uri);// Import your Mongoose User model
 
@@ -103,6 +103,96 @@ export const Partnerregister = async (req, res) => {
   }
 };
 
+//endpoint for updating account status of the partner 
+export const updateAccountStatus = async (req, res) => {
+  try {
+    const { partnerId, status } = req.body;
+    const validStatuses = ["active", "inactive", "suspended"];
+
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({ success: false, message: "Invalid account status" });
+    }
+
+    await client.connect();
+    const database = client.db("Partners");
+    const collection = database.collection("profile");
+
+    const result = await collection.updateOne(
+      { _id: new ObjectId(partnerId) },
+      { $set: { accountStatus: status } }
+    );
+
+    await client.close();
+
+    if (result.matchedCount === 0) {
+      return res.status(404).json({ success: false, message: "Partner not found" });
+    }
+
+    res.status(200).json({ success: true, message: "Account status updated successfully" });
+  } catch (err) {
+    console.error("Error updating account status:", err);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
+
+
+//endpoint to get all the partners with detials 
+export const getAllPartners = async (req, res) => {
+  try {
+    await client.connect();
+    const database = client.db("Partners");
+    const collection = database.collection("profile");
+
+    const partners = await collection.find({}).toArray();
+
+    await client.close();
+
+    res.status(200).json({ success: true, data: partners });
+  } catch (err) {
+    console.error("Error fetching partners:", err);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
+
+//get partner by status 
+export const getPartnerbyStatus = async (req, res) => {
+  try {
+    const { status } = req.query;
+    const validStatuses = ["active", "inactive", "suspended"];
+    const query = {};
+
+    if (status) {
+      let statuses = Array.isArray(status) ? status : [status];
+
+      statuses = statuses.filter((s) => validStatuses.includes(s));
+
+      if (statuses.length === 0) {
+        return res.status(400).json({ success: false, message: "Invalid account status provided" });
+      }
+
+      query.accountStatus = { $in: statuses };
+    }
+
+    await client.connect();
+    const database = client.db("Partners");
+    const collection = database.collection("profile");
+
+    const partners = await collection.find(query).toArray();
+
+    await client.close();
+
+    if (partners.length === 0) {
+      return res.status(404).json({ success: false, message: "No partners found" });
+    }
+
+    res.status(200).json({ success: true, data: partners });
+  } catch (err) {
+    console.error("Error fetching partners:", err);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
+
+
 export const logout = (req, res) => {
   res.clearCookie("access_token",{
     sameSite:"none",
@@ -112,6 +202,79 @@ export const logout = (req, res) => {
 };
 
 
+ 
+
+//endpoint to get partner checklist
+export const getPartnerChecklist = async (req, res) => {
+  try {
+    const { partnerId } = req.params;
+    await client.connect();
+    const database = client.db("Partners");
+    const collection = database.collection("profile");
+
+    const partner = await collection.findOne({ _id: new ObjectId(partnerId) });
+
+    if (!partner) {
+      await client.close();
+      return res.status(404).json({ success: false, message: "Partner not found" });
+    }
+
+    const checklist = {
+      companyNameVerification: partner.companyNameVerification || false,
+      businessTypeVerification: partner.businessTypeVerification || false,
+      licenseNumberVerification: partner.licenseNumberVerification || false,
+      gstNumberVerification: partner.gstNumberVerification || false,
+      locationVerification: partner.locationVerification || false,
+    };
+
+    await client.close();
+    res.status(200).json({ success: true, checklist });
+  } catch (err) {
+    console.error("Error fetching checklist:", err);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
+
+//endpoint to update partner checklist
+export const updatePartnerChecklist = async (req, res) => {
+  try {
+    const { partnerId } = req.params;
+    const {
+      companyNameVerification,
+      businessTypeVerification,
+      licenseNumberVerification,
+      gstNumberVerification,
+      locationVerification,
+    } = req.body;
+
+    await client.connect();
+    const database = client.db("Partners");
+    const collection = database.collection("profile");
+
+    const updateFields = {};
+    if (companyNameVerification !== undefined) updateFields.companyNameVerification = companyNameVerification;
+    if (businessTypeVerification !== undefined) updateFields.businessTypeVerification = businessTypeVerification;
+    if (licenseNumberVerification !== undefined) updateFields.licenseNumberVerification = licenseNumberVerification;
+    if (gstNumberVerification !== undefined) updateFields.gstNumberVerification = gstNumberVerification;
+    if (locationVerification !== undefined) updateFields.locationVerification = locationVerification;
+
+    const result = await collection.updateOne(
+      { _id: new ObjectId(partnerId) },
+      { $set: updateFields }
+    );
+
+    await client.close();
+
+    if (result.matchedCount === 0) {
+      return res.status(404).json({ success: false, message: "Partner not found" });
+    }
+
+    res.status(200).json({ success: true, message: "Checklist updated successfully" });
+  } catch (err) {
+    console.error("Error updating checklist:", err);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
 
 
 
