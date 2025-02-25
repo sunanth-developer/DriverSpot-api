@@ -145,19 +145,20 @@ export const getAllPartners = async (req, res) => {
 
     const partners = await collection.find({}).toArray();
 
-    await client.close();
-
     res.status(200).json({ success: true, data: partners });
   } catch (err) {
     console.error("Error fetching partners:", err);
     res.status(500).json({ success: false, message: "Internal server error" });
+  } finally {
+    await client.close();
   }
 };
+
 
 //get partner by status 
 export const getPartnerbyStatus = async (req, res) => {
   try {
-    const { status } = req.query;
+    const { status } = req.body;  
     const validStatuses = ["active", "inactive", "suspended"];
     const query = {};
 
@@ -179,8 +180,6 @@ export const getPartnerbyStatus = async (req, res) => {
 
     const partners = await collection.find(query).toArray();
 
-    await client.close();
-
     if (partners.length === 0) {
       return res.status(404).json({ success: false, message: "No partners found" });
     }
@@ -189,6 +188,8 @@ export const getPartnerbyStatus = async (req, res) => {
   } catch (err) {
     console.error("Error fetching partners:", err);
     res.status(500).json({ success: false, message: "Internal server error" });
+  } finally {
+    await client.close();
   }
 };
 
@@ -207,7 +208,8 @@ export const logout = (req, res) => {
 //endpoint to get partner checklist
 export const getPartnerChecklist = async (req, res) => {
   try {
-    const { partnerId } = req.params;
+    const { partnerId } = req.body;  
+
     await client.connect();
     const database = client.db("Partners");
     const collection = database.collection("profile");
@@ -227,43 +229,28 @@ export const getPartnerChecklist = async (req, res) => {
       locationVerification: partner.locationVerification || false,
     };
 
-    await client.close();
     res.status(200).json({ success: true, checklist });
   } catch (err) {
     console.error("Error fetching checklist:", err);
     res.status(500).json({ success: false, message: "Internal server error" });
+  } finally {
+    await client.close();
   }
 };
 
 //endpoint to update partner checklist
 export const updatePartnerChecklist = async (req, res) => {
   try {
-    const { partnerId } = req.params;
-    const {
-      companyNameVerification,
-      businessTypeVerification,
-      licenseNumberVerification,
-      gstNumberVerification,
-      locationVerification,
-    } = req.body;
+    const { partnerId, ...updateFields } = req.body;  
 
     await client.connect();
     const database = client.db("Partners");
     const collection = database.collection("profile");
 
-    const updateFields = {};
-    if (companyNameVerification !== undefined) updateFields.companyNameVerification = companyNameVerification;
-    if (businessTypeVerification !== undefined) updateFields.businessTypeVerification = businessTypeVerification;
-    if (licenseNumberVerification !== undefined) updateFields.licenseNumberVerification = licenseNumberVerification;
-    if (gstNumberVerification !== undefined) updateFields.gstNumberVerification = gstNumberVerification;
-    if (locationVerification !== undefined) updateFields.locationVerification = locationVerification;
-
     const result = await collection.updateOne(
       { _id: new ObjectId(partnerId) },
       { $set: updateFields }
     );
-
-    await client.close();
 
     if (result.matchedCount === 0) {
       return res.status(404).json({ success: false, message: "Partner not found" });
@@ -273,8 +260,11 @@ export const updatePartnerChecklist = async (req, res) => {
   } catch (err) {
     console.error("Error updating checklist:", err);
     res.status(500).json({ success: false, message: "Internal server error" });
+  } finally {
+    await client.close();
   }
 };
+
 
 
 
