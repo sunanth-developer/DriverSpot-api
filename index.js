@@ -10,12 +10,13 @@ import { driverlogin, driverregister,  logout, phonelogin,  } from "./controller
 import { Adduseraddress, Deleteuseraddress, Edituseraddress, Getuseraddress } from "./controllers/Adduseraddress.js";
 import { createBulkBooking, Editresponce, Getfilterrequests, Getrequests, Getrequestsdriver, Requestdriver } from "./controllers/Requestdriver.js";
 import { driverbookings, Driverdata, Driverstatus, getallbookings, getbulkbookings, getDriverDetails, ongoingride, startedride, updatebookingstatus, updateotpstatus, updateRideStatus } from "./controllers/Driverdates.js";
-
+import { getTotalActiveDrivers,getTotalBookings,getTotalPartners,getTotalUsers,getTotalRevenue } from "./controllers/AdminDashboard.js";
 import { UploadRideImages } from "./controllers/Ride.js";
+import { getDriverDetailsAdmin,editDriverDetails,getDriverChecklist,updateDriverChecklist } from "./controllers/Driverspage.js";
 import { Editprofile, Getprofile, Getusers, getalluserbookings } from "./controllers/Userprofilr.js";
 import { Getbookingdetails, Getsharedrides, Shareride, Updateuserlocation } from "./controllers/Sharedrides.js";
 import { MongoClient, ObjectId } from 'mongodb';
-import { Partnerlogin, Partnerregister } from "./controllers/Partner.js";
+import { Partnerlogin, Partnerregister,updateAccountStatus,getAllPartners,getPartnerChecklist,getPartnerbyStatus,updatePartnerChecklist } from "./controllers/Partner.js";
 import { pickupanddropbooking,  logisticsbooking, valetbooking, partnerbookings } from "./controllers/Partners_booking.js";
 const app = express();
 const server = createServer(app);
@@ -89,6 +90,24 @@ app.post("/logisticsbooking", logisticsbooking);
 app.post("/valetbooking", valetbooking);
 app.post("/partnerbookings", partnerbookings);
 app.post("/uploadimage", UploadRideImages);
+//new api endpoints for admin dashboard
+app.post("/getTotalBookings",getTotalBookings);
+app.post("/getTotalPartners",getTotalPartners);
+app.post("/getTotalUsers",getTotalUsers);
+app.post("/getTotalRevenue",getTotalRevenue);
+app.post("/getTotalActiveDrivers",getTotalActiveDrivers);
+app.post("/getDriverDetailsAdmin",getDriverDetailsAdmin);
+app.post("/editDriverDetails",editDriverDetails);
+app.post("/getDriverChecklist",getDriverChecklist);
+app.post("/updateDriverChecklist",updateDriverChecklist);
+app.post("/updateAccountStatus",updateAccountStatus);
+app.post("/getAllPartners",getAllPartners);
+app.post("/getPartnerChecklist",getPartnerChecklist);
+app.post("/getPartnerbyStatus",getPartnerbyStatus);
+app.post("/updatePartnerChecklist",updatePartnerChecklist);
+
+
+
 const client = new MongoClient(uri);
 async function connectToMongoDB() {
   try {
