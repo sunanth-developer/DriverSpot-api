@@ -7,6 +7,9 @@ const client = new MongoClient(uri);// Import your Mongoose User model
 export const Partnerlogin = async (req, res) => {
    console.log("req.body",req.body)
   try {
+
+    const hashedPassword = bcrypt.hashSync(req.body.password, 10);
+    console.log("hashedPassword",hashedPassword)
   const client = new MongoClient(uri);
    await client.connect();
    const database = client.db("Partners");
