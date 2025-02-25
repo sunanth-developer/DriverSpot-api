@@ -14,26 +14,30 @@ export const Partnerlogin = async (req, res) => {
    await client.connect();
    const database = client.db("Partners");
     const collection = database.collection("profile");
-    const driver = await collection.findOne({mobile:req.body.mobile});
-    console.log(driver)
-    const isPasswordCorrect = bcrypt.compareSync(req.body.password, driver.password);
-    console.log("Password Match:", isPasswordCorrect);
-    if (!isPasswordCorrect)
-    return res.status(400).json("Wrong username or password!");
+    const partner = await collection.findOne({mobile:req.body.mobile});
+    console.log(partner)
+    if(partner.accountstatus == "pending"){
+      console.log("Your account is pending")
+      return res.status(400).json("Your account is not activated");
+    } else if(partner.accountstatus == "active"){
+      const isPasswordCorrect = bcrypt.compareSync(req.body.password, partner.password);
+      console.log("Password Match:", isPasswordCorrect);
+      if (!isPasswordCorrect)
+      return res.status(400).json("Wrong username or password!");
 
   // Generate JWT Token
-  const token = jwt.sign({ id: driver._id }, "jwtkey", { expiresIn: "1h" });
+  const token = jwt.sign({ id: partner._id }, "jwtkey", { expiresIn: "1h" });
 
   // Send response with token in a cookie
-  const { password, ...other } = driver; // Exclude password from response
+  const { password, ...other } = partner; // Exclude password from response
   res
     .cookie("access_token", token, {
       httpOnly: true,
     })
     .status(200)
     .json(other);
-  console.log("Disconnected from MongoDB");
-  } catch (err) {
+      console.log("Disconnected from MongoDB");
+  } }catch (err) {
     console.error("Login Error:", err);
     res.status(500).json("Internal Server Error");
   }
@@ -65,6 +69,7 @@ export const Partnerregister = async (req, res) => {
       email: req.body.formData.email,
       companyName: req.body.formData.companyName,
       businessType: req.body.formData.businessType,
+      accountstatus: "pending",
     };
 
     // Connect to MongoDB
