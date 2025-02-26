@@ -6,7 +6,7 @@ export const pickupanddropbooking = async (req, res) => {
     try {
         console.log(req.body)
         const newBooking ={
-          p_id: req.body.userId,
+          p_id:  req.body.partnerId,
           pickup_location: req.body.pickupPoint,
           drop_location: req.body.destination,
           booking_type: req.body.bookingType,
@@ -14,7 +14,6 @@ export const pickupanddropbooking = async (req, res) => {
           cartype: req.body.vehicleType,
           transmission: req.body.gearType,
           registrationNo: req.body.registrationNo,
-          partnerId: req.body.partnerId,
           schedule_date: req.body.scheduleDateTime,
           serviceName: req.body.serviceName,
           booking_status: req.body.status,
