@@ -136,7 +136,7 @@ export const updateAccountStatus = async (req, res) => {
 };
 
 
-//endpoint to get all the partners with detials 
+//endpoint to get all the partners with details 
 export const getAllPartners = async (req, res) => {
   try {
     await client.connect();
