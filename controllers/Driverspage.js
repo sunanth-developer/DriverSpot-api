@@ -41,56 +41,7 @@ export const editDriverDetails = async (req, res) => {
         const db = client.db("users");
         const driversCollection = db.collection("drivers");
 
-        const { driverId } = req.body;  
-        const { vehicles, gearTypes, drivercategory, accountStatus } = req.body;
-
-        const allowedVehicles = ["sedan", "suv", "luxury", "hatchback"];
-        const allowedGearTypes = ["automatic", "manual"];
-        const allowedAccountStatuses = ["active", "inactive", "suspended"];
-        const allowedDriverCategories = ["c1", "c2", "b", "c", "gold", "f"];
-
-        let updateFields = {};
-
-        if (vehicles) {
-            if (!Array.isArray(vehicles) || vehicles.some(v => !allowedVehicles.includes(v))) {
-                await client.close();
-                return res.status(400).json({ error: "Invalid vehicle values." });
-            }
-
-            updateFields.sedantype = vehicles.includes("sedan") ? true : null;
-            updateFields.suvtype = vehicles.includes("suv") ? true : null;
-            updateFields.luxurytype = vehicles.includes("luxury") ? true : null;
-            updateFields.hatchbacktype = vehicles.includes("hatchback") ? true : null;
-        }
-
-        if (gearTypes) {
-            if (!Array.isArray(gearTypes) || gearTypes.some(g => !allowedGearTypes.includes(g))) {
-                await client.close();
-                return res.status(400).json({ error: "Invalid gearTypes values." });
-            }
-            updateFields.geartype = gearTypes;
-        }
-
-        if (drivercategory) {
-            if (!allowedDriverCategories.includes(drivercategory)) {
-                await client.close();
-                return res.status(400).json({ error: "Invalid driver category value." });
-            }
-            updateFields.drivercategory = drivercategory;
-        }
-
-        if (accountStatus) {
-            if (!allowedAccountStatuses.includes(accountStatus)) {
-                await client.close();
-                return res.status(400).json({ error: "Invalid accountStatus value." });
-            }
-            updateFields.accountStatus = accountStatus;
-        }
-
-        if (Object.keys(updateFields).length === 0) {
-            await client.close();
-            return res.status(400).json({ error: "No valid fields to update." });
-        }
+        const { driverId, ...updateFields } = req.body;
 
         const result = await driversCollection.updateOne(
             { _id: new ObjectId(driverId) },
@@ -116,62 +67,45 @@ export const getDriverChecklist = async (req, res) => {
         const db = client.db("users");
         const driversCollection = db.collection("drivers");
 
-        const { driverId } = req.body;  
+        const { driverId, mobile } = req.body;  
+
+        const query = driverId ? { _id: new ObjectId(driverId) } : { mobile };
 
         const driver = await driversCollection.findOne(
-            { _id: new ObjectId(driverId) },
+            query,
             { projection: { _id: 0, AadharNumber: 1, PancardNumber: 1, Agreement: 1, Terms: 1, DateOfBirth: 1, Experience: 1, Languages: 1 } }
         );
 
+        await client.close();
+
         if (!driver) {
-            await client.close();
             return res.status(404).json({ error: "Driver not found." });
         }
 
-        const checklist = {
-            AadharNumber: driver.AadharNumber ?? false,
-            PancardNumber: driver.PancardNumber ?? false,
-            Agreement: driver.Agreement ?? false,
-            Terms: driver.Terms ?? false,
-            DateOfBirth: driver.DateOfBirth ?? false,
-            Experience: driver.Experience ?? false,
-            Languages: driver.Languages ?? false
-        };
-
-        await client.close();
-        res.json({ success: true, checklist });
-
+        res.json({ success: true, checklist: driver });
     } catch (error) {
         console.error("Error fetching driver checklist:", error);
+        await client.close();
         res.status(500).json({ error: "Internal Server Error" });
     }
 };
 
- 
 export const updateDriverChecklist = async (req, res) => {
     try {
         await client.connect();
         const db = client.db("users");
         const driversCollection = db.collection("drivers");
 
-        const { driverId, updates } = req.body;  
+        const { driverId, mobile, updates } = req.body;  
 
-        const allowedFields = [
-            "AadharNumber", "PancardNumber", "Agreement",
-            "Terms", "DateOfBirth", "Experience", "Languages"
-        ];
+        const query = driverId ? { _id: new ObjectId(driverId) } : { mobile };
 
-        let updateFields = {};
+        const allowedFields = new Set(["AadharNumber", "PancardNumber", "Agreement", "Terms", "DateOfBirth", "Experience", "Languages"]);
 
-        for (const field of allowedFields) {
-            if (updates.hasOwnProperty(field)) {
-                if (typeof updates[field] !== "boolean") {
-                    await client.close();
-                    return res.status(400).json({ error: `${field} must be true or false.` });
-                }
-                updateFields[field] = updates[field];
-            }
-        }
+        const updateFields = Object.keys(updates).reduce((acc, key) => {
+            if (allowedFields.has(key)) acc[key] = updates[key];
+            return acc;
+        }, {});
 
         if (Object.keys(updateFields).length === 0) {
             await client.close();
@@ -179,20 +113,20 @@ export const updateDriverChecklist = async (req, res) => {
         }
 
         const result = await driversCollection.updateOne(
-            { _id: new ObjectId(driverId) },
-            { $set: updateFields },
-            { upsert: true }
+            query,
+            { $set: updateFields }
         );
 
         await client.close();
 
-        if (result.modifiedCount === 0 && result.upsertedCount === 0) {
-            return res.status(404).json({ error: "Driver not found or no changes made." });
+        if (result.matchedCount === 0) {
+            return res.status(404).json({ error: "Driver not found." });
         }
 
         res.json({ message: "Driver checklist updated successfully!" });
     } catch (error) {
         console.error("Error updating driver checklist:", error);
+        await client.close();
         res.status(500).json({ error: "Internal Server Error" });
     }
 };
