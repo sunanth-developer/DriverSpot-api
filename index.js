@@ -18,6 +18,7 @@ import { Getbookingdetails, Getsharedrides, Shareride, Updateuserlocation } from
 import { MongoClient, ObjectId } from 'mongodb';
 import { Partnerlogin, Partnerregister,updateAccountStatus,getAllPartners,getPartnerChecklist,getPartnerbyStatus,updatePartnerChecklist } from "./controllers/Partner.js";
 import { pickupanddropbooking,  logisticsbooking, valetbooking, partnerbookings } from "./controllers/Partners_booking.js";
+import { getPricing,getbusinessPricing } from "./controllers/Price.js";
 const app = express();
 const server = createServer(app);
 const io = new Server(server, {
@@ -105,6 +106,8 @@ app.post("/getAllPartners",getAllPartners);
 app.post("/getPartnerChecklist",getPartnerChecklist);
 app.post("/getPartnerbyStatus",getPartnerbyStatus);
 app.post("/updatePartnerChecklist",updatePartnerChecklist);
+app.post("/getPricing",getPricing);
+app.post("/getbusinessPricing",getbusinessPricing);
 
 
 
@@ -141,6 +144,118 @@ const rideSessions = new Map();
 
 io.on('connection', (socket) => {
   console.log('New connection:', socket.id);
+  
+  // Check if connecting client is an admin
+  const userType = socket.handshake.query.userType;
+  const adminId = socket.handshake.query.adminId;
+  
+  if (userType === 'admin') {
+    console.log(`Admin connected: ${adminId} with socket ID: ${socket.id}`);
+    
+    // Handle admin joining admin room
+    socket.on('join_admin_room', () => {
+      socket.join('admin_room');
+      console.log(`Admin ${adminId} joined admin_room`);
+      
+      // Confirm to the client that they joined
+      socket.emit('room_membership_status', {
+        room: 'admin_room',
+        joined: true,
+        socketId: socket.id
+      });
+    });
+    
+    // Handle room membership check
+    socket.on('check_room_membership', (data) => {
+      const room = data.room;
+      const isMember = socket.rooms.has(room);
+      console.log(`Checking if socket ${socket.id} is in room ${room}: ${isMember}`);
+      
+      socket.emit('room_membership_status', {
+        room: room,
+        isMember: isMember,
+        allRooms: Array.from(socket.rooms)
+      });
+    });
+  }
+
+  // Store partner sockets
+  const partnerSockets = new Map();
+
+  // Handle partner connection
+  socket.on('partner_connected', (partnerId) => {
+    partnerSockets.set(partnerId, socket.id);
+    console.log(`Partner ${partnerId} connected with socket ID: ${socket.id}`);
+    
+    // Notify admins about partner connection
+    io.to('admin_room').emit('partner_connected', {
+      partnerId: partnerId,
+      timestamp: new Date().toISOString()
+    });
+  });
+
+  // Handle booking confirmation from partner
+  socket.on('booking_confirmed', (bookingData) => {
+    try {
+      console.log('Booking confirmation received:', bookingData);
+      
+      // Update booking status in database
+      updateBookingStatus(bookingData.bookingId, 'confirmed', bookingData.partnerId);
+      
+      // Debug: check if admin_room exists and has members
+      const adminRoom = io.sockets.adapter.rooms.get('admin_room');
+      console.log('Admin room exists:', !!adminRoom);
+      console.log('Admin room size:', adminRoom ? adminRoom.size : 0);
+      
+      // Notify admin panel - use both event names for compatibility
+      io.to('admin_room').emit('partner_booking_confirmed', {
+        data:bookingData,
+        details: bookingData
+      });
+      
+      // Also emit with alternative event name
+      io.to('admin_room').emit('new_booking', {
+        data:bookingData,
+        details: bookingData
+      });
+      
+      // Acknowledge receipt
+      socket.emit('confirmation_received', {
+        success: true,
+        bookingId: bookingData.bookingId,
+        message: 'Booking confirmation received'
+      });
+    } catch (error) {
+      console.error('Error processing booking confirmation:', error);
+      socket.emit('confirmation_received', {
+        success: false,
+        bookingId: bookingData.bookingId,
+        message: 'Error processing booking confirmation'
+      });
+    }
+  });
+
+  // Handle partner disconnection
+  socket.on('disconnect', () => {
+    // Remove partner from active connections
+    for (const [partnerId, socketId] of partnerSockets.entries()) {
+      if (socketId === socket.id) {
+        partnerSockets.delete(partnerId);
+        console.log(`Partner ${partnerId} disconnected`);
+        
+        // Notify admins about partner disconnection
+        io.to('admin_room').emit('partner_disconnected', {
+          partnerId: partnerId,
+          timestamp: new Date().toISOString()
+        });
+      }
+    }
+    
+    // Log admin disconnection
+    if (userType === 'admin') {
+      console.log(`Admin ${adminId} disconnected`);
+    }
+  });
 
   // Existing connection handlers
   socket.on('userConnected', (userId) => {
@@ -444,5 +559,27 @@ io.on('connection', (socket) => {
     }
   });
 });
+
+// Helper function to update booking status
+async function updateBookingStatus(bookingId, status, partnerId) {
+  const client = new MongoClient(uri);
+  try {
+    await client.connect();
+    await client.db("users").collection("bookings").updateOne(
+      { _id: new ObjectId(bookingId) },
+      { 
+        $set: { 
+          booking_status: status,
+          confirmed_by: partnerId,
+          confirmed_at: new Date()
+        } 
+      }
+    );
+  } catch (error) {
+    console.error('Error updating booking status:', error);
+  } finally {
+    await client.close();
+  }
+}
 
 export default app;
