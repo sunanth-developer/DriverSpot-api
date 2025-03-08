@@ -61,34 +61,6 @@ export const editDriverDetails = async (req, res) => {
     }
 };
 
-export const getDriverChecklist = async (req, res) => {
-    try {
-        await client.connect();
-        const db = client.db("users");
-        const driversCollection = db.collection("drivers");
-
-        const { driverId, mobile } = req.body;  
-
-        const query = driverId ? { _id: new ObjectId(driverId) } : { mobile };
-
-        const driver = await driversCollection.findOne(
-            query,
-            { projection: { _id: 0, AadharNumber: 1, PancardNumber: 1, Agreement: 1, Terms: 1, DateOfBirth: 1, Experience: 1, Languages: 1 } }
-        );
-
-        await client.close();
-
-        if (!driver) {
-            return res.status(404).json({ error: "Driver not found." });
-        }
-
-        res.json({ success: true, checklist: driver });
-    } catch (error) {
-        console.error("Error fetching driver checklist:", error);
-        await client.close();
-        res.status(500).json({ error: "Internal Server Error" });
-    }
-};
 
 export const updateDriverChecklist = async (req, res) => {
     try {
@@ -96,21 +68,36 @@ export const updateDriverChecklist = async (req, res) => {
         const db = client.db("users");
         const driversCollection = db.collection("drivers");
 
-        const { driverId, mobile, updates } = req.body;  
+        const { driverId, mobile, checklist } = req.body;  
+
+        if (!driverId && !mobile) {
+            await client.close();
+            return res.status(400).json({ error: "Driver ID or Mobile number is required." });
+        }
+
+        if (!Array.isArray(checklist)) {
+            await client.close();
+            return res.status(400).json({ error: "Checklist must be an array." });
+        }
 
         const query = driverId ? { _id: new ObjectId(driverId) } : { mobile };
 
-        const allowedFields = new Set(["AadharNumber", "PancardNumber", "Agreement", "Terms", "DateOfBirth", "Experience", "Languages"]);
-
-        const updateFields = Object.keys(updates).reduce((acc, key) => {
-            if (allowedFields.has(key)) acc[key] = updates[key];
+         
+        const checklistObject = checklist.reduce((acc, field) => {
+            acc[field] = true;
             return acc;
         }, {});
 
-        if (Object.keys(updateFields).length === 0) {
-            await client.close();
-            return res.status(400).json({ error: "No valid fields to update." });
-        }
+         
+        const allowedFields = ["AadharNumber", "PancardNumber", "Agreement", "Terms", "DateOfBirth", "Experience", "Languages"];
+        allowedFields.forEach(field => {
+            if (!checklist.includes(field)) {
+                checklistObject[field] = false;
+            }
+        });
+
+         
+        const updateFields = { checklist: checklistObject };
 
         const result = await driversCollection.updateOne(
             query,
@@ -124,9 +111,11 @@ export const updateDriverChecklist = async (req, res) => {
         }
 
         res.json({ message: "Driver checklist updated successfully!" });
+
     } catch (error) {
         console.error("Error updating driver checklist:", error);
         await client.close();
         res.status(500).json({ error: "Internal Server Error" });
     }
 };
+//to be tested with partial updates as well
