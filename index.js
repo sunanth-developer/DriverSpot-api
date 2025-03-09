@@ -12,10 +12,11 @@ import { createBulkBooking, Editresponce, Getfilterrequests, Getrequests, Getreq
 import { driverbookings, Driverdata, Driverstatus, getallbookings, getbulkbookings, getDriverDetails, ongoingride, startedride, updatebookingstatus, updateotpstatus, updateRideStatus } from "./controllers/Driverdates.js";
 import { getTotalActiveDrivers,getTotalBookings,getTotalPartners,getTotalUsers,getTotalRevenue } from "./controllers/AdminDashboard.js";
 import { UploadRideImages } from "./controllers/Ride.js";
-import { getDriverDetailsAdmin,editDriverDetails,getDriverChecklist,updateDriverChecklist } from "./controllers/Driverspage.js";
+import { getDriverDetailsAdmin,editDriverDetails,updateDriverChecklist } from "./controllers/Driverspage.js";
 import { Editprofile, Getprofile, Getusers, getalluserbookings } from "./controllers/Userprofilr.js";
 import { Getbookingdetails, Getsharedrides, Shareride, Updateuserlocation } from "./controllers/Sharedrides.js";
 import { MongoClient, ObjectId } from 'mongodb';
+import { getPendingBookings,getAvailableDrivers,acceptBooking,rejectBooking} from "./controllers/BtoBbookings.js"
 import { Partnerlogin, Partnerregister,updateAccountStatus,getAllPartners,getPartnerChecklist,getPartnerbyStatus,updatePartnerChecklist } from "./controllers/Partner.js";
 import { pickupanddropbooking,  logisticsbooking, valetbooking, partnerbookings } from "./controllers/Partners_booking.js";
 const app = express();
@@ -98,14 +99,16 @@ app.post("/getTotalRevenue",getTotalRevenue);
 app.post("/getTotalActiveDrivers",getTotalActiveDrivers);
 app.post("/getDriverDetailsAdmin",getDriverDetailsAdmin);
 app.post("/editDriverDetails",editDriverDetails);
-app.post("/getDriverChecklist",getDriverChecklist);
 app.post("/updateDriverChecklist",updateDriverChecklist);
 app.post("/updateAccountStatus",updateAccountStatus);
 app.post("/getAllPartners",getAllPartners);
 app.post("/getPartnerChecklist",getPartnerChecklist);
 app.post("/getPartnerbyStatus",getPartnerbyStatus);
 app.post("/updatePartnerChecklist",updatePartnerChecklist);
-
+app.post("/getPendingBookings",getPendingBookings);
+app.post("/getAvailableDrivers",getAvailableDrivers);
+app.post("/acceptBooking",acceptBooking);
+app.post("/rejectBooking",rejectBooking);
 
 
 const client = new MongoClient(uri);
