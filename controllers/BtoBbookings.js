@@ -11,8 +11,7 @@ export const getPendingBookings = async (req, res) => {
         const bookingsCollection = db.collection("bookings");
 
         const pendingBookings = await bookingsCollection
-            .find({ booking_status: "waiting" })  
-            .sort({ serviceName: 1 })  
+            .find({ booking_status: "waiting" })   
             .toArray();
 
         res.status(200).json({ success: true, data: pendingBookings });
@@ -37,7 +36,7 @@ export const acceptBooking = async (req, res) => {
             { _id: new ObjectId(bookingId) },
             {
                 $set: {
-                    booking_status: "completed",
+                    booking_status: "accepted",
                     drivers: Array.isArray(drivers) ? drivers : [drivers], 
                     poc: poc
                 }
